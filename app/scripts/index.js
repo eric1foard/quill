@@ -10,8 +10,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log('hello');
 
-    //set getUserMedia to browser-specific version
-    //only Chrome, FireFox, Opera are supported
     navigator.getUserMedia = ( navigator.getUserMedia ||
         navigator.webkitGetUserMedia ||
         navigator.mozGetUserMedia ||
@@ -38,7 +36,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         else {
             console.log('calling peer...');
-            peer.call(otherPeer, stream);
+            var call = peer.call(otherPeer, stream);
+            call.on('stream', function(stream) {
+                console.log('streaming call!');
+                showMedia(stream);
+            });
         }
     });
 
@@ -47,10 +49,12 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('answering call!');
         call.answer(stream);
 
+        //handle media from incoming call
         call.on('stream', function(stream) {
             console.log('streaming call!');
             showMedia(stream);
         });
+
     });
 
   }, function (err) {console.error(err);});
