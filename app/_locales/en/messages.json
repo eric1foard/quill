@@ -1,0 +1,10 @@
+{
+    "appName": {
+        "message": "quill",
+        "description": "The name of the application"
+    },
+    "appDescription": {
+        "message": "A P2P video chat that transcribes conversation",
+        "description": "The description of the application"
+    }
+}
