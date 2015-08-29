@@ -1,6 +1,13 @@
 'use strict';
 document.addEventListener('DOMContentLoaded', function() {
 
+    function showMedia(stream) {
+        var video = document.createElement('video');
+        document.body.appendChild(video);
+        video.src = window.URL.createObjectURL(stream);
+        video.play();
+    }
+
     console.log('hello');
 
     //set getUserMedia to browser-specific version
@@ -25,37 +32,32 @@ document.addEventListener('DOMContentLoaded', function() {
       button.addEventListener('click', function () {
         var otherPeer = document.querySelector('#peerID').value;
         if (otherPeer.length<=0) {
-            alert('please enter a peer ID!');
+            //TODO: display something to user
+            console.log('please enter a peer ID!');
         }
 
         else {
             console.log('calling peer...');
-            var call = peer.call(otherPeer, stream);
-                  //handle incoming call
-                  peer.on('call', function () {
-                    console.log('answering call!');
-                    call.answer(stream);
+            peer.call(otherPeer, stream);
+        }
+    });
 
-                    call.on('stream', function(stream) {
-                        console.log('streaming call!');
-                        showMedia(stream);
-                    });
-                });
-              }
-          });
-      
+      //handle incoming call
+      peer.on('call', function (call) {
+        console.log('answering call!');
+        call.answer(stream);
+
+        call.on('stream', function(stream) {
+            console.log('streaming call!');
+            showMedia(stream);
+        });
+    });
 
   }, function (err) {console.error(err);});
 
 
 }, false);
 
-function showMedia(stream) {
-    var video = document.createElement('video');
-    document.body.appendChild(video);
-    video.src = window.URL.createObjectURL(stream);
-    video.play();
-}
 
 
 
