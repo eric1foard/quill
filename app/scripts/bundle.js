@@ -19,10 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
       //display user's peer ID
       peer.on('open', function(id) {
         document.querySelector('#myID').value = id;
-        var video = document.createElement('video');
-        document.body.appendChild(video);
-        video.src = window.URL.createObjectURL(stream)
-        video.play()
+        showMedia(stream);
     });
 
       //on click, make call to peer
@@ -34,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         else {
             console.log('calling peer...');
-            peer.call(otherPeer, stream);
+            var call = peer.call(otherPeer, stream);
         }
     });
 
@@ -42,12 +39,34 @@ document.addEventListener('DOMContentLoaded', function() {
       peer.on('call', function () {
         console.log('answering call!');
         call.answer(stream);
+
+        call.on('stream', function(stream) {
+            console.log('streaming call!');
+          showMedia(stream);
+      });
     });
+
+      
 
   }, function (err) {console.error(err);});
 
 
 }, false);
+
+function showMedia(stream) {
+    var video = document.createElement('video');
+    document.body.appendChild(video);
+    video.src = window.URL.createObjectURL(stream);
+    video.play();
+}
+
+
+
+
+
+
+
+
 
 },{"peerjs":6}],2:[function(require,module,exports){
 module.exports.RTCSessionDescription = window.RTCSessionDescription ||
