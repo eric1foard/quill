@@ -32,20 +32,18 @@ document.addEventListener('DOMContentLoaded', function() {
         else {
             console.log('calling peer...');
             var call = peer.call(otherPeer, stream);
-        }
-    });
+                  //handle incoming call
+                  peer.on('call', function () {
+                    console.log('answering call!');
+                    call.answer(stream);
 
-      //handle incoming call
-      peer.on('call', function () {
-        console.log('answering call!');
-        call.answer(stream);
-
-        call.on('stream', function(stream) {
-            console.log('streaming call!');
-          showMedia(stream);
-      });
-    });
-
+                    call.on('stream', function(stream) {
+                        console.log('streaming call!');
+                        showMedia(stream);
+                    });
+                });
+              }
+          });
       
 
   }, function (err) {console.error(err);});
