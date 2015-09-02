@@ -14,7 +14,7 @@ function showMedia(stream, otherPeer) {
     try {
         console.log('from show media, ',otherPeer);
       var video = document.createElement('video');
-      video.id = otherPeer;
+      video.setAttribute('id', otherPeer);
       document.body.appendChild(video);
       video.src = window.URL.createObjectURL(stream);
       video.play();
