@@ -101,7 +101,7 @@ function handleIncomingCall(peer, stream) {
 
     call.on('stream', function(stream) {
         console.log('streaming call!');
-        showMedia(stream);
+        showMedia(stream, otherPeer);
         showHangUp(call, otherPeer);
     });
 
