@@ -125,11 +125,11 @@ function dataConnectPeer(peer, otherPeer, stream) {
     dataCon.send({peers: peers});
     dataCon.on('data', function(data) {
         if (data.script) {
-           console.log('recived 1 ', data.script);
-           textArea.value+='\n'+data.script;
-       }
-       handleNewPeers(data, peer, stream);
-   });
+         console.log('recived 1 ', data.script);
+         textArea.value+='\n'+data.script;
+     }
+     handleNewPeers(data, peer, stream);
+ });
 });
 
   dataCon.on('error', function(error) {
@@ -221,7 +221,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     navigator.getUserMedia({ video: true, audio: true }, function (stream) {
         var Peer = require('peerjs');
-        var peer = new Peer({host:'arcane-island-4855.herokuapp.com', secure:true, port:443, key: 'peerjs', debug: 3});
+        var peer = new Peer({key: 'xwx3jbch3vo8yqfr'});
+        //var peer = new Peer({host:'arcane-island-4855.herokuapp.com', secure:true, port:443, key: 'peerjs', debug: 3});
         console.log('peer ',peer);
 
         //display user's peer ID
