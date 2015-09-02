@@ -124,7 +124,7 @@ function dataConnectPeer(peer, otherPeer, stream) {
   var textArea = document.querySelector('textArea');
 
   dataCon.on('open', function() {
-    transcribe(peer.id);
+    transcribe(peer.id, dataCon);
     //send peers I'm connected to; same as yours?
     dataCon.send({peers: peers});
     dataCon.on('data', function(data) {
@@ -144,7 +144,7 @@ function dataConnectPeer(peer, otherPeer, stream) {
 
 function handleIncomingData(peer) {
     peer.on('connection', function(dataCon) {
-        transcribe(dataCon.peer);
+        transcribe(dataCon.peer, dataCon);
         dataCon.send({peers: peers});
         dataCon.on('data', function(data) {
             if (data.script) {
@@ -175,7 +175,7 @@ function handleNewPeers(data, peer, stream) {
 }
 
 // SPEECH TO TEXT
-function transcribe(peerID) {
+function transcribe(peerID, dataCon) {
     window.SpeechRecognition =
     window.SpeechRecognition ||
     window.webkitSpeechRecognition ||
@@ -241,18 +241,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     }, function (err) {console.error(err);});
 }, false);
-
-
-
-
-
-
-
-
-
-
-
-
 },{"peerjs":6}],2:[function(require,module,exports){
 module.exports.RTCSessionDescription = window.RTCSessionDescription ||
 	window.mozRTCSessionDescription;
