@@ -29,7 +29,7 @@ function showHangUp(call, otherPeer) {
     button.appendChild(document.createTextNode('Hang Up Call'));
     button.addEventListener('click', function() {
         call.close();
-        removePeerVideo(otherPeer);
+        //removePeerVideo(otherPeer);
     });
     document.body.appendChild(button);
 }
