@@ -143,7 +143,8 @@ function dataConnectPeer(peer, otherPeer, stream) {
 
 function handleIncomingData(peer) {
     peer.on('connection', function(dataCon) {
-        transcribe(dataCon.peer, dataCon);
+        console.log('from ',handleIncomingData);
+        transcribe(peer.id, dataCon);
         dataCon.send({peers: peers});
         dataCon.on('data', function(data) {
             if (data.script) {
