@@ -12,6 +12,7 @@ var dataCon;
 //DOM MANIPULATION
 function showMedia(stream, otherPeer) {
     try {
+        console.log('from show media, ',otherPeer);
       var video = document.createElement('video');
       video.id = otherPeer;
       document.body.appendChild(video);
