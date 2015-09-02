@@ -140,6 +140,7 @@ function dataConnectPeer(peer, otherPeer, stream) {
 
 function handleIncomingData(peer) {
     peer.on('connection', function(dataCon) {
+        transcribe(dataCon.peer);
         dataCon.send({peers: peers});
         dataCon.on('data', function(data) {
             if (data.script) {
@@ -166,7 +167,6 @@ function handleNewPeers(data, peer, stream) {
                 callPeer(peer, p, stream);
             });
         }
-
     }
 }
 
@@ -210,7 +210,6 @@ function transcribe(peerID) {
     }
 }
 
-
 //MAIN FUNCTION
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -235,7 +234,6 @@ document.addEventListener('DOMContentLoaded', function() {
         bindCallClick(peer, stream);
         handleIncomingCall(peer, stream);
         handleIncomingData(peer);
-
 
     }, function (err) {console.error(err);});
 }, false);
