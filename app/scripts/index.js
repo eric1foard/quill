@@ -12,15 +12,15 @@ var dataCon;
 function showMedia(stream, otherPeer) {
     try {
         console.log('from show media, ',otherPeer);
-      var video = document.createElement('video');
-      video.setAttribute('id', otherPeer);
-      document.body.appendChild(video);
-      video.src = window.URL.createObjectURL(stream);
-      video.play();
-  }
-  catch(error) {
-    console.log('there was a problem displaying ',otherPeer,'\'s video. ',error);
-}
+        var video = document.createElement('video');
+        video.setAttribute('id', otherPeer);
+        document.body.appendChild(video);
+        video.src = window.URL.createObjectURL(stream);
+        video.play();
+    }
+    catch(error) {
+        console.log('there was a problem displaying ',otherPeer,'\'s video. ',error);
+    }
 }
 
 function showHangUp(call, otherPeer) {
@@ -204,8 +204,10 @@ function transcribe(peerID, dataCon) {
                     dataCon.send({script: event.results[i][0].transcript});
                 }
             };
-            speechRecog.start();
+
             console.log('listening...');
+            setInterval(speechRecog.start(), 30000);
+
         }
         catch(error) {
             //TODO: display error to user
