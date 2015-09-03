@@ -128,11 +128,11 @@ function dataConnectPeer(peer, otherPeer, stream) {
     dataCon.send({peers: peers});
     dataCon.on('data', function(data) {
         if (data.script) {
-         console.log('recived 1 ', data.script);
-         textArea.value+='\n'+data.script;
-     }
-     handleNewPeers(data, peer, stream);
- });
+           console.log('recived 1 ', data.script);
+           textArea.value+='\n'+data.script;
+       }
+       handleNewPeers(data, peer, stream);
+   });
 });
 
   dataCon.on('error', function(error) {
@@ -192,7 +192,7 @@ function transcribe(peerID, dataCon) {
             var transcript = document.querySelector('textArea');
 
             //keep recording if user is silent
-            speechRecog.continuous = true;
+            //speechRecog.continuous = true;
             //show speech before onResult event fires
             //speechRecog.interimResults = true;
 
@@ -207,10 +207,12 @@ function transcribe(peerID, dataCon) {
 
             speechRecog.onend = function() {
                 console.log('restarted speechRecog!');
-                speechRecog.start();
+                if (dataCon.open) {
+                    speechRecog.start();
+                }
             };
 
-            speechRecog.start();
+            speechRecog.start(); 
             console.log('listening...');
 
         }
