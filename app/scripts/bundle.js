@@ -211,8 +211,7 @@ function transcribe(peerID, dataCon) {
                 speechRecog.start();
             };
 
-
-
+            speechRecog.start();
             console.log('listening...');
 
         }
