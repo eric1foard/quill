@@ -206,7 +206,10 @@ function transcribe(peerID, dataCon) {
             };
 
             console.log('listening...');
-            setInterval(speechRecog.start(), 30000);
+            while(dataCon.open) {
+               setInterval(keepListening(speechRecog), 30000); 
+            }
+            
 
         }
         catch(error) {
@@ -214,6 +217,10 @@ function transcribe(peerID, dataCon) {
             console.log('error from transcribe: ',error.message);
         }
     }
+}
+
+function keepListening(speechRecog) {
+    speechRecog.start();
 }
 
 //MAIN FUNCTION
