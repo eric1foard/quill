@@ -2,7 +2,6 @@
 
 var React = require('react');
 var speechRecog = require('./transcribe');
-var $ = require('jquery');
 
 console.log('listening...');
 speechRecog.transcribe('test123');
@@ -20,18 +19,8 @@ var Quill = React.createClass({
 			<TranscriptContainer data={this.state.data}/>
 			</div>
 			);
-	},
-	componentDidMount: function() {
-		speechRecog.wksr.onresult = function(event) {
-			var result = '';
-			for (var i = event.resultIndex; i < event.results.length; i++) {
-				result += event.results[i][0].transcript;
-			}
-			console.log('from onresult ',result);
-			this.setState({data: {author: 'eric', text: result}});
-		}.bind(this);
-		
-	}
+	}	
+	
 });
 
 var TranscriptContainer = React.createClass({
@@ -48,6 +37,17 @@ var TranscriptContainer = React.createClass({
 			{transcriptions}
 			</div>
 			);
+	},
+	componentDidMount: function() {
+		speechRecog.wksr.onresult = function(event) {
+			var result = '';
+			for (var i = event.resultIndex; i < event.results.length; i++) {
+				result += event.results[i][0].transcript;
+			}
+			console.log('from onresult ',result);
+			data.push({author: 'eric', text: result});
+			this.setState({data: data});
+		}.bind(this);
 	}
 });
 
