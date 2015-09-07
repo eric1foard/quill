@@ -1,26 +1,45 @@
 'use strict';
 
 var React = require('react');
-var speechRecog = require('./transcribe');
 
-console.log('listening...');
-speechRecog.transcribe('test123');
-var data = speechRecog.speechRecord;
+var data;
+
+React.render(<Quill data={data} />, document.getElementById('content'));
 
 var Quill = React.createClass({
 	getInitialState: function() {
-		console.log('from getInitialState ',data);
-		return {data: data};
+		return {data: {transcript:[], peerIDs:[], myPeerObj: {}}};
 	},
 	render: function() {
 		return (
 			<div className="quill">
 			<h1>Welcome To Quill!</h1>
-			<TranscriptContainer data={this.state.data}/>
+			<TranscriptContainer data={this.state.data.transcript}/>
+			<PeerVideoContainer data={this.state.data.peerIDs}/>
+			<LocalMediaStream data={this.state.data.myPeerObj}/>
+			<AddPeerForm/>
 			</div>
 			);
 	}	
-	
+
+});
+
+var AddPeerForm = React.createClass({
+	render: function() {
+
+	},
+	componentDidMount: function() {
+		
+	}
+});
+
+var LocalMediaStream = React.createClass({
+	render: function() {
+
+	},
+	componentDidMount: function() {
+
+	}
 });
 
 var TranscriptContainer = React.createClass({
@@ -90,20 +109,3 @@ var PeerVideo = React.createClass({
 			);
 	}
 });
-
-React.render(<Quill data={data} />, document.getElementById('content'));
-
-
-// var data = {
-// 	transcript: [
-// 	{author: "Pete Hunt", text: "This is one comment"},
-// 	{author: "Jordan Walke", text: "This is another comment"}
-// 	]
-// 	// ,peers: [
-// 	// {peerID: '', stream: STREAM}
-// 	// ]
-// };
-
-
-
-
