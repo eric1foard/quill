@@ -4,9 +4,10 @@ var React = require('react');
 
 var LocalMediaStream = React.createClass({
   render: function () {
+    var streamSrc = window.URL.createObjectURL(this.props.myStream);
     return(
       <div className="localMediaStream">
-      <video src={this.props.mySrc} autoPlay></video>
+      <video src={streamSrc} autoPlay></video>
       </div>
     )
   }
