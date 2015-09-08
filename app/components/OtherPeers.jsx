@@ -7,8 +7,9 @@ var OtherPeers = React.createClass({
   render: function () {
     var peerVids = this.props.peers.map(function(p) {
       var streamSrc = window.URL.createObjectURL(p.stream);
+      console.log('from OtherPeers ',streamSrc);
       return(
-        <OtherPeer src={streamSrc} />
+        <OtherPeer key={p.peerID} src={streamSrc} />
       )
     });
 

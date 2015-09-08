@@ -6,7 +6,7 @@ var CallPeerForm = React.createClass({
   render: function () {
     return (
       <div className="CallPeerForm">
-        <p>{this.props.myPeerID}</p>
+        <input type="text" value={this.props.myPeerID} readOnly/>
         <input type="text" ref="newPeer" placeholder="Enter a Peer ID"/>
         <button onClick={this.handleSubmit}>Connect</button>
       </div>

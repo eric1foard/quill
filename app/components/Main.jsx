@@ -75,7 +75,7 @@ function initLocalMediaStream(anchor) {
       navigator.mozGetUserMedia ||
       navigator.msGetUserMedia);
 
-	navigator.getUserMedia({ video: true, audio: true },
+	navigator.getUserMedia({ video: true, audio: false },
 		function (stream) {
 		this.setState({myStream: stream});
 	}.bind(anchor),

@@ -6,7 +6,7 @@ var OtherPeer = React.createClass({
   render: function () {
     return (
       <div className="OtherPeer">
-      <video src={this.props.src} autoPlay></video>
+      <video key={this.props.key} src={this.props.src} autoPlay></video>
       </div>
       );
   }

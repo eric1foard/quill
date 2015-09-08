@@ -7,7 +7,7 @@ var CallPeerForm = React.createClass({displayName: "CallPeerForm",
   render: function () {
     return (
       React.createElement("div", {className: "CallPeerForm"}, 
-        React.createElement("p", null, this.props.myPeerID), 
+        React.createElement("input", {type: "text", value: this.props.myPeerID, readOnly: true}), 
         React.createElement("input", {type: "text", ref: "newPeer", placeholder: "Enter a Peer ID"}), 
         React.createElement("button", {onClick: this.handleSubmit}, "Connect")
       )
@@ -118,7 +118,7 @@ function initLocalMediaStream(anchor) {
       navigator.mozGetUserMedia ||
       navigator.msGetUserMedia);
 
-	navigator.getUserMedia({ video: true, audio: true },
+	navigator.getUserMedia({ video: true, audio: false },
 		function (stream) {
 		this.setState({myStream: stream});
 	}.bind(anchor),
@@ -163,7 +163,7 @@ var OtherPeer = React.createClass({displayName: "OtherPeer",
   render: function () {
     return (
       React.createElement("div", {className: "OtherPeer"}, 
-      React.createElement("video", {src: this.props.src, autoPlay: true})
+      React.createElement("video", {key: this.props.key, src: this.props.src, autoPlay: true})
       )
       );
   }
@@ -181,8 +181,9 @@ var OtherPeers = React.createClass({displayName: "OtherPeers",
   render: function () {
     var peerVids = this.props.peers.map(function(p) {
       var streamSrc = window.URL.createObjectURL(p.stream);
+      console.log('from OtherPeers ',streamSrc);
       return(
-        React.createElement(OtherPeer, {src: streamSrc})
+        React.createElement(OtherPeer, {key: p.peerID, src: streamSrc})
       )
     });
 
