@@ -1,33 +1,30 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <title></title>
+  <meta charset="utf-8">
+  <title></title>
+  <link rel="stylesheet" href="./styles/bootstrap.min.css">
+  <link rel="stylesheet" href="./styles/main.css">
+  <link rel="stylesheet" href="./styles/flexgrid.scss">
+  <script src="scripts/bundle.js"></script>
 </head>
 <body>
+    <!-- <div class="tools">
+      <div class="transcriptContainer">
+      </div>
+      <div class="localVideo">
+      </div>
+    </div> -->
+<label>My Peer ID:</label><br/>
+<input id="myID" readonly></input><br/>
 
-    <label>My Peer ID:</label><br/>
-    <input id="myID" readonly></input><br/>
+<label>Friend's ID:</label><br/>
+<input id="peerID"></input><br/>
 
-    <label>Friend's ID:</label><br/>
-    <input id="peerID"></input><br/>
+<button id="connect">connect</button><br/>
 
-    <textarea></textarea>
-
-    <button id="connect">connect</button><br/>
-    <script src="scripts/bundle.js"></script>
+<div id="videoContainer">
+</div>
 
 </body>
 </html>
-
-<!-- <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Quill</title>
-  </head>
-  <body>
-    <div id="content"></div>
-    <script src="scripts/bundle.js"></script>
-  </body>
-</html> -->

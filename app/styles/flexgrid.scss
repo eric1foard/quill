@@ -1,0 +1,186 @@
+// flexgrid 4.1.0 - https://github.com/corysimmons/flexgrid
+
+
+$gutter: 30px;
+
+
+/// Sets properties on a container necessary for flexed items to go inside. Think of this like your row in a row > column grid system, except it can work vertically as well as horizontally.
+///
+/// @param {string} $dir [row] - Which direction the layout will go. Accepts row (horizontal) or column (vertical).
+/// @param {number} $gut [$gutter] - Sets a custom gutter width for this grid. Accepts any CSS unit and should probably match the block()'s $gut value.
+///
+/// @example
+///   .container {
+///     @include box($dir: row, $gut: 60px);
+///   }
+
+@mixin box($dir: row, $gut: $gutter) {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: $dir;
+
+  @if ($dir == row) {
+    overflow-x: hidden;
+    overflow-y: inherit;
+  } @else {
+    overflow-x: inherit;
+    overflow-y: hidden;
+  }
+
+  @if ($gut != 0) {
+    @if ($dir == row) {
+      margin-left: -($gut / 2);
+      margin-right: -($gut / 2);
+    } @else {
+      margin-top: -($gut / 2);
+      margin-bottom: -($gut / 2);
+      height: calc(100% + #{$gut});
+    }
+  }
+}
+
+
+/// Specifies the sizing and spacing of the element it's applied to. The column in a row > column grid system except it can go vertical as well as horizontal.
+///
+/// @param {fraction} $ratio [1] - A fraction of the container for the element to span.
+/// @param {string} $dir [row] - Which direction the layout will go. Accepts row (horizontal) or column (vertical).
+/// @param {number} $gut [$gutter] - Sets a custom gutter width for this element. Accepts any CSS unit and should probably match the box()'s $gut value.
+///
+/// @example
+///   section {
+///     @include box($gut: 60px);
+///     .element {
+///       @include box(1/3, 60px);
+///     }
+///   }
+
+@mixin block($ratio: 1, $dir: row, $gut: $gutter) {
+  @if ($gut == 0) {
+    flex: 0 0 calc(100% * #{$ratio});
+    margin-left: 0;
+    margin-right: 0;
+  } @else {
+    flex: 0 0 calc(100% * #{$ratio} - #{$gut});
+    @if ($dir == row) {
+      margin-left: ($gut / 2);
+      margin-right: ($gut / 2);
+    } @else {
+      margin-top: ($gut / 2);
+      margin-bottom: ($gut / 2);
+    }
+  }
+}
+
+
+/// Stretches elements to take up flexed space or sets elements to perform Flexbox CSS masonry.
+///
+/// @param {string} $layout [grow] - Sets what type of layout Flexbox will create. This can be grow or masonry. grow will fill remaining space. Masonry will create CSS masonry.
+///
+/// @example
+///   section {
+///     @include box;
+///     padding: 15px 30px;
+///     > img {
+///       @include block(1/3);
+///       @include stretch(masonry);
+///       margin-top: 15px;
+///       margin-bottom: 15px;
+///     }
+///   }
+
+@mixin stretch($layout: grow) {
+  @if ($layout == masonry) {
+    flex: 1 0 auto;
+  } @else {
+    flex-grow: 1;
+  }
+}
+
+
+/// Creates a horizontal offset between columns. Unfortunately it's not possible to create a vertical offset between columns because CSS percentages are relative to the width of a containing element.
+///
+/// @param {fraction} $ratio [1] - A fraction of the container for the element to set a margin of. Can be positive or negative.
+/// @param {number} $gut [$gutter] - Sets a custom gutter width for this offset. It should match the grid in question's gutter. Accepts any CSS unit.
+///
+/// @example
+///   section {
+///     @include box;
+///     > figure {
+///       @include block(1/3);
+///       &:first-child {
+///         @include offset(1/3);
+///       }
+///     }
+///   }
+
+@mixin offset($ratio: 1, $gut: $gutter) {
+  @if ($ratio == 0) {
+    margin-left: ($gut / 2);
+    margin-right: ($gut / 2);
+  }
+  @if ($gut > 0) {
+    @if ($ratio > 0) {
+      margin-right: calc(100% * #{$ratio} + (#{$gut} / 2));
+    } @else {
+      margin-left: calc(-100% * #{$ratio} + (#{$gut} / 2));
+    }
+  } @else {
+    @if ($ratio > 0) {
+      margin-right: calc(100% * #{$ratio});
+    } @else {
+      margin-left: calc(100% * #{$ratio});
+    }
+  }
+}
+
+
+/// Sets a translucent background color to all elements it affects. Helpful while setting up, or debugging, the structure of your site to make sure all items are cleared correctly.
+///
+/// @param {color} [$bg=blue] - A color to be lightened, so make sure you pick a darkish color.
+///
+/// @example
+///   section {
+///     @include edit(red);
+///   }
+
+@mixin edit($bg: blue) {
+  * {
+    background: rgba($bg, .1);
+  }
+}
+
+
+/// Vertically and/or horizontally align nested elements.
+///
+/// @param {string} $dir [both] - Both, vertical, v, horizontal, or h.
+///
+/// @example
+///   .parent {
+///     @include align(vertical);
+///     width: 600px;
+///     height: 400px;
+///     .child {
+///       width: 300px;
+///       height: 150px;
+///     }
+///   }
+
+@mixin align($dir: both) {
+  display: flex;
+  @if ($dir == 'horizontal') or ($dir == 'h') {
+    justify-content: center;
+  } @else if ($dir == 'vertical') or ($dir == 'v') {
+    align-items: center;
+  } @else if ($dir == 'reset') {
+    justify-content: inherit;
+    align-items: inherit;
+  } @else {
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+
+html, body {
+  height: 100%;
+}

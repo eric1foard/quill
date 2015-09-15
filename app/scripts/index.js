@@ -8,13 +8,23 @@ var peers = [];
 //HELPER FUNCTIONS
 
 //DOM MANIPULATION
+function resizeVids() {
+  var items = document.querySelectorAll('video');
+  for (var i = 0; i < items.length; i++) {
+    items[i].style.height = 100-items.length*10+'vh';
+    items[i].style.width = 100-items.length*10+'vw';
+  }
+}
+
 function showMedia(stream, otherPeer) {
   try {
     console.log('from show media, ',otherPeer);
     var video = document.createElement('video');
     video.setAttribute('id', otherPeer);
-    document.body.appendChild(video);
+    var videoContainer = document.querySelector('#videoContainer');
+    videoContainer.appendChild(video);
     video.src = window.URL.createObjectURL(stream);
+    resizeVids();
     video.play();
   }
   catch(error) {
@@ -37,7 +47,9 @@ function showHangUp(call, otherPeer) {
 
 function removePeerVideo(otherPeer) {
   document.body.removeChild(document.getElementById('hangup'+otherPeer));
-  document.body.removeChild(document.getElementById(otherPeer));
+  var videoContainer = document.querySelector('#videoContainer');
+  videoContainer.removeChild(document.getElementById(otherPeer));
+  resizeVids();
 }
 
 function bindCallClick(peer, stream) {
