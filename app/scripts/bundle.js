@@ -13,7 +13,7 @@ function resizeVids() {
   var items = document.querySelectorAll('video');
   for (var i = 0; i < items.length; i++) {
     items[i].style.height = 100-items.length*10+'vh';
-    items[i].style.width = 100-items.length*10+'vw';
+    items[i].style.width = 100-items.length*10+'vh'; //vh or vw???
   }
 }
 
