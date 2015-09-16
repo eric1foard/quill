@@ -12,8 +12,8 @@ var peers = [];
 function resizeVids() {
   var items = document.querySelectorAll('video');
   for (var i = 0; i < items.length; i++) {
-    items[i].style.height = 100-items.length*10+'vh';
-    items[i].style.width = 100-items.length*10+'vh'; //vh or vw???
+    items[i].style.height = 100-items.length*12+'vh';
+    items[i].style.width = 100-items.length*12+'vh'; //vh or vw???
   }
 }
 
@@ -23,7 +23,11 @@ function showMedia(stream, otherPeer) {
     var video = document.createElement('video');
     video.setAttribute('id', otherPeer);
     var videoContainer = document.querySelector('#videoContainer');
-    videoContainer.appendChild(video);
+    var outer = document.createElement('outer');
+    var inner = document.createElement('inner');
+    inner.appendChild(video);
+    outer.appendChild(inner);
+    videoContainer.appendChild(outer);
     video.src = window.URL.createObjectURL(stream);
     resizeVids();
     video.play();
