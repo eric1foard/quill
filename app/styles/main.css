@@ -1,16 +1,15 @@
-.videoContainer {
-    width: 750px; /* pick whatever width you want */
-}
-.container .outer {
-    width: 100%;
-    padding-top: 75%; /* defines aspect ratio */
-    position: relative;
+body {
+  display: flex;
 }
 
-.container .outer .inner {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+.videoContainer {
+  flex: 3
+}
+
+.tools {
+  flex: 1
+}
+
+video {
+  display: inline-block;
 }

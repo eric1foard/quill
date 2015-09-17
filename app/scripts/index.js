@@ -3,16 +3,32 @@
 //GLOBAL VARS
 //keep track of who is in the call
 var peers = [];
-
+var $ = require('jquery');
 
 //HELPER FUNCTIONS
 
-//DOM MANIPULATION
+function nextSquare(n) {
+  var square = false;
+  while (!square) {
+    if (Number.isInteger(Math.sqrt(n))) {
+      square = true;
+    }
+    else {
+      n++;
+    }
+  }
+  return n;
+}
+
 function resizeVids() {
-  var items = document.querySelectorAll('video');
-  for (var i = 0; i < items.length; i++) {
-    items[i].style.height = 100-items.length*12+'vh';
-    items[i].style.width = 100-items.length*12+'vh'; //vh or vw???
+  var numVids = $('video').length;
+  var parentWidth = $('#videoContainer').width();
+  console.log('PARENT WIDTH: ',parentWidth);
+  console.log('vid width: ',$('video').width(), 'vid height', $('video').height());
+  if (numVids>2) {
+    var numVidsWide = Math.sqrt(nextSquare(numVids));
+    $('video').width(parentWidth/numVidsWide);
+    console.log('vid width: ',$('video').width(), 'vid height', $('video').height());
   }
 }
 
@@ -22,11 +38,7 @@ function showMedia(stream, otherPeer) {
     var video = document.createElement('video');
     video.setAttribute('id', otherPeer);
     var videoContainer = document.querySelector('#videoContainer');
-    var outer = document.createElement('outer');
-    var inner = document.createElement('inner');
-    inner.appendChild(video);
-    outer.appendChild(inner);
-    videoContainer.appendChild(outer);
+    videoContainer.appendChild(video);
     video.src = window.URL.createObjectURL(stream);
     resizeVids();
     video.play();
@@ -50,7 +62,7 @@ function showHangUp(call, otherPeer) {
 }
 
 function removePeerVideo(otherPeer) {
-  document.body.removeChild(document.getElementById('hangup'+otherPeer));
+  //document.body.removeChild(document.getElementById('hangup'+otherPeer));
   var videoContainer = document.querySelector('#videoContainer');
   videoContainer.removeChild(document.getElementById(otherPeer));
   resizeVids();
@@ -90,7 +102,7 @@ function callPeer(peer, otherPeer, stream) {
       peers.push(otherPeer);
       console.log('streaming call!');
       showMedia(stream, otherPeer);
-      showHangUp(call, otherPeer);
+      //showHangUp(call, otherPeer);
     });
 
     call.on('close', function() {
@@ -119,7 +131,7 @@ function handleIncomingCall(peer, stream) {
     call.on('stream', function(stream) {
       console.log('streaming call!');
       showMedia(stream, otherPeer);
-      showHangUp(call, otherPeer);
+      //showHangUp(call, otherPeer);
     });
 
     call.on('close', function() {
@@ -240,7 +252,7 @@ function transcribe(peerID, dataCon) {
   }
 }
 
-//MAIN FUNCTION
+//MAIN
 
 document.addEventListener('DOMContentLoaded', function() {
   navigator.getUserMedia = ( navigator.getUserMedia ||
