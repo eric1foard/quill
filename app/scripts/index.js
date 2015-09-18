@@ -25,12 +25,15 @@ function resizeVids() {
   var parentWidth = $('#videoContainer').width();
   console.log('PARENT WIDTH: ',parentWidth);
   console.log('vid width: ',$('video').width(), 'vid height', $('video').height());
-  if (numVids>2) {
+  if (numVids>1) {
     var numVidsWide = Math.sqrt(nextSquare(numVids));
-    $('video').width(parentWidth/numVidsWide);
+    $('video').width((parentWidth/numVidsWide)-10);
     console.log('vid width: ',$('video').width(), 'vid height', $('video').height());
   }
 }
+
+//TODO: fix bug where vid doesn't resize when others have left and it's the last
+//left in room
 
 function showMedia(stream, otherPeer) {
   try {
@@ -260,10 +263,13 @@ document.addEventListener('DOMContentLoaded', function() {
     navigator.mozGetUserMedia ||
     navigator.msGetUserMedia);
 
-    navigator.getUserMedia({ video: true, audio: true }, function (stream) {
+    navigator.getUserMedia({ video: {
+      mandatory: { maxWidth: 1280, maxHeight: 720, minWidth: 1280, minHeight: 720, }},
+      audio: true },
+      function (stream) {
       var Peer = require('peerjs');
       //var peer = new Peer({key: 'xwx3jbch3vo8yqfr'});
-      var peer = new Peer({host:'arcane-island-4855.herokuapp.com', secure:true, port:443, key: 'peerjs', debug: 3});
+      var peer = new Peer({host:'arcane-island-4855.herokuapp.com', secure:true, port:443, key: 'peerjs'});
       console.log('peer ',peer);
 
       //display user's peer ID
@@ -278,4 +284,10 @@ document.addEventListener('DOMContentLoaded', function() {
       handleIncomingData(peer, stream);
 
     }, function (err) {console.error(err);});
+
+    $(window).resize(function () {
+      console.log('window resized');
+      resizeVids();
+    });
+
   }, false);

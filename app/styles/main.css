@@ -1,15 +1,23 @@
+html {
+  height: 100%;
+  margin: 0;
+}
+
 body {
+  height: inherit;
   display: flex;
 }
 
-.videoContainer {
-  flex: 3
+#videoContainer {
+  background-color: LightGrey;
+  flex: 3;
 }
 
-.tools {
-  flex: 1
+#tools {
+  background-color: LightBlue;
+  flex: 1;
 }
 
 video {
-  display: inline-block;
+  display: inline-flex;
 }
