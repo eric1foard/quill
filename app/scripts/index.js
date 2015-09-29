@@ -35,11 +35,23 @@ function resizeVids() {
 //TODO: fix bug where vid doesn't resize when others have left and it's the last
 //left in room
 
-function showMedia(stream, otherPeer) {
+function showMyMedia(stream) {
+  var video = document.createElement('video');
+  video.setAttribute('id', 'localMedia');
+  video.src = window.URL.createObjectURL(stream);
+  var parentWidth = $('#localMediaContainer').width();
+  $('#localMediaContainer').append(video);
+  $('#localMedia').width(parentWidth);
+  video.play();
+  console.log('localMedia width after ', $('#localMedia').width());
+}
+
+function showPeerMedia(stream, otherPeer) {
   try {
     console.log('from show media, ',otherPeer);
     var video = document.createElement('video');
     video.setAttribute('id', otherPeer);
+    video.setAttribute('class', 'peerVideo');
     var videoContainer = document.querySelector('#videoContainer');
     videoContainer.appendChild(video);
     video.src = window.URL.createObjectURL(stream);
@@ -104,7 +116,7 @@ function callPeer(peer, otherPeer, stream) {
       //record that otherPeer is in the call
       peers.push(otherPeer);
       console.log('streaming call!');
-      showMedia(stream, otherPeer);
+      showPeerMedia(stream, otherPeer);
       //showHangUp(call, otherPeer);
     });
 
@@ -133,7 +145,7 @@ function handleIncomingCall(peer, stream) {
 
     call.on('stream', function(stream) {
       console.log('streaming call!');
-      showMedia(stream, otherPeer);
+      showPeerMedia(stream, otherPeer);
       //showHangUp(call, otherPeer);
     });
 
@@ -267,27 +279,27 @@ document.addEventListener('DOMContentLoaded', function() {
       mandatory: { maxWidth: 1280, maxHeight: 720, minWidth: 1280, minHeight: 720, }},
       audio: true },
       function (stream) {
-      var Peer = require('peerjs');
-      //var peer = new Peer({key: 'xwx3jbch3vo8yqfr'});
-      var peer = new Peer({host:'arcane-island-4855.herokuapp.com', secure:true, port:443, key: 'peerjs'});
-      console.log('peer ',peer);
+        var Peer = require('peerjs');
+        //var peer = new Peer({key: 'xwx3jbch3vo8yqfr'});
+        var peer = new Peer({host:'arcane-island-4855.herokuapp.com', secure:true, port:443, key: 'peerjs'});
+        console.log('peer ',peer);
 
-      //display user's peer ID
-      peer.on('open', function(id) {
-        peers.push(id);
-        document.querySelector('#myID').value = id;
-        showMedia(stream);
+        //display user's peer ID
+        peer.on('open', function(id) {
+          peers.push(id);
+          document.querySelector('#myID').value = id;
+          showMyMedia(stream);
+        });
+
+        bindCallClick(peer, stream);
+        handleIncomingCall(peer, stream);
+        handleIncomingData(peer, stream);
+
+      }, function (err) {console.error(err);});
+
+      $(window).resize(function () {
+        console.log('window resized');
+        resizeVids();
       });
 
-      bindCallClick(peer, stream);
-      handleIncomingCall(peer, stream);
-      handleIncomingData(peer, stream);
-
-    }, function (err) {console.error(err);});
-
-    $(window).resize(function () {
-      console.log('window resized');
-      resizeVids();
-    });
-
-  }, false);
+    }, false);

@@ -18,6 +18,13 @@ body {
   flex: 1;
 }
 
-video {
+.peerVideo {
   display: inline-flex;
+}
+
+#localMediaContainer {
+  position: fixed;
+  bottom: 0;
+  background-color: black;
+  width: 25%;
 }
