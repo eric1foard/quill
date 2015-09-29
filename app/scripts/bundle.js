@@ -39,7 +39,7 @@ function logTranscript (message) {
   entry.className = 'message';
   var mes = document.createTextNode(message);
   entry.appendChild(mes);
-  document.querySelector('#tools').appendChild(entry);
+  document.querySelector('#transcript').appendChild(entry);
 }
 
 
@@ -242,8 +242,8 @@ function transcribe(peerID, dataCon) {
       //speechRecog.interimResults = true;
 
       speechRecog.onresult = function(event) {
-        transcript += peerID+':';
-        dataCon.send({script: peerID+':'});
+        transcript += peerID+': ';
+        dataCon.send({script: peerID+': '});
         for (var i = event.resultIndex; i < event.results.length; i++) {
           transcript += event.results[i][0].transcript;
           dataCon.send({script: event.results[i][0].transcript});
@@ -276,6 +276,20 @@ document.addEventListener('DOMContentLoaded', function() {
     navigator.webkitGetUserMedia ||
     navigator.mozGetUserMedia ||
     navigator.msGetUserMedia);
+
+    //REMOVE ME
+    var lorem = 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.';
+    logTranscript('dfgd343dfd: this is a test');
+    logTranscript('dfgd343dfd: so is this, yo');
+    logTranscript('dfgd343dfd: '+lorem);
+    logTranscript('dfgd343dfd: '+lorem);
+    logTranscript('dfgd343dfd: '+lorem);
+    logTranscript('dfgd343dfd: '+lorem);
+    logTranscript('dfgd343dfd: '+lorem);
+    logTranscript('dfgd343dfd: '+lorem);
+    logTranscript('dfgd343dfd: '+lorem);
+    logTranscript('dfgd343dfd: '+lorem);
+
 
     navigator.getUserMedia({ video: {
       mandatory: { maxWidth: 1280, maxHeight: 720, minWidth: 1280, minHeight: 720, }},

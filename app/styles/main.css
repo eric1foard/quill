@@ -1,6 +1,8 @@
 html {
   height: 100%;
   margin: 0;
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-weight: 300;
 }
 
 body {
@@ -9,18 +11,30 @@ body {
 }
 
 #videoContainer {
-  background-color: LightGrey;
+  background-color: #282C34;
   flex: 3;
 }
 
 #controls {
-  padding-top: 5px;
-  padding-left: 5px;
+  color: #95a5a6;
+  padding-top: 10px;
+  padding-left: 10px;
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-weight: 300;
+}
+
+button {
+  color: black;
+}
+
+input {
+  color: black;
 }
 
 #tools {
-  background-color: LightBlue;
+  background-color: #21252B;
   flex: 1;
+  overflow: scroll;
 }
 
 .peerVideo {
@@ -37,8 +51,15 @@ body {
 }
 
 .message {
-  background-color: #e67e22;
-  opacity: .5;
+  /*background-color: #f1c40f;
+  opacity: .5;*/
+  color: #95a5a6;
   min-height: 25px;
   width: 100%;
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #95a5a6;
+
 }
