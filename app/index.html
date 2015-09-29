@@ -9,22 +9,23 @@
   <script src="scripts/bundle.js"></script>
 </head>
 <body>
-    <!-- <div class="tools">
-      <div class="transcriptContainer">
-      </div>
-      <div class="localVideo">
-      </div>
-    </div> -->
+  <!-- <div class="tools">
+  <div class="transcriptContainer">
+</div>
+<div class="localVideo">
+</div>
+</div> -->
 <div id="videoContainer">
+  <div id="controls">
+    <label>My Peer ID:</label>
+    <input id="myID" readonly></input>
+    <label>Friend's ID:</label>
+    <input id="peerID"></input>
+    <button id="connect">connect</button><br/>
+  </div>
 </div>
 <div id="tools">
-  <label>My Peer ID:</label><br/>
-  <input id="myID" readonly></input><br/>
-
-  <label>Friend's ID:</label><br/>
-  <input id="peerID"></input><br/>
-
-  <button id="connect">connect</button><br/>
+  <div id="transcript"></div>
   <div id="localMediaContainer"></div>
 </div>
 

@@ -22,19 +22,20 @@ function nextSquare(n) {
 }
 
 function resizeVids() {
-  var numVids = $('video').length;
+  var numVids = $('.peerVideo').length;
   var parentWidth = $('#videoContainer').width();
   console.log('PARENT WIDTH: ',parentWidth);
   console.log('vid width: ',$('video').width(), 'vid height', $('video').height());
   if (numVids>1) {
     var numVidsWide = Math.sqrt(nextSquare(numVids));
-    $('video').width((parentWidth/numVidsWide)-10);
+    $('.peerVideo').width((parentWidth/numVidsWide)-10);
     console.log('vid width: ',$('video').width(), 'vid height', $('video').height());
+  }
+  else {
+    $('.peerVideo').width(parentWidth);
   }
 }
 
-//TODO: fix bug where vid doesn't resize when others have left and it's the last
-//left in room
 
 function showMyMedia(stream) {
   var video = document.createElement('video');
@@ -172,8 +173,7 @@ function dataConnectPeer(peer, otherPeer, stream) {
     dataCon.send({peers: peers});
     dataCon.on('data', function(data) {
       if (data.script) {
-        console.log('recived 1 ', data.script);
-        textArea.value+='\n'+data.script;
+        logTranscript(data.script);
       }
       if (data.peers) {
         handleNewPeers(data, peer, stream);
