@@ -35,3 +35,10 @@ body {
   /*bound width of localMedia*/
   width: 25%;
 }
+
+.message {
+  background-color: #e67e22;
+  opacity: .5;
+  min-height: 25px;
+  width: 100%;
+}

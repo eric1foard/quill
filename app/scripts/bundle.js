@@ -24,16 +24,22 @@ function nextSquare(n) {
 function resizeVids() {
   var numVids = $('.peerVideo').length;
   var parentWidth = $('#videoContainer').width();
-  console.log('PARENT WIDTH: ',parentWidth);
-  console.log('vid width: ',$('video').width(), 'vid height', $('video').height());
   if (numVids>1) {
     var numVidsWide = Math.sqrt(nextSquare(numVids));
     $('.peerVideo').width((parentWidth/numVidsWide)-10);
-    console.log('vid width: ',$('video').width(), 'vid height', $('video').height());
   }
   else {
     $('.peerVideo').width(parentWidth);
   }
+}
+
+function logTranscript (message) {
+  console.log('from logTranscript');
+  var entry = document.createElement('div');
+  entry.className = 'message';
+  var mes = document.createTextNode(message);
+  entry.appendChild(mes);
+  document.querySelector('#tools').appendChild(entry);
 }
 
 
@@ -45,12 +51,10 @@ function showMyMedia(stream) {
   $('#localMediaContainer').append(video);
   $('#localMedia').width(parentWidth);
   video.play();
-  console.log('localMedia width after ', $('#localMedia').width());
 }
 
 function showPeerMedia(stream, otherPeer) {
   try {
-    console.log('from show media, ',otherPeer);
     var video = document.createElement('video');
     video.setAttribute('id', otherPeer);
     video.setAttribute('class', 'peerVideo');
@@ -164,10 +168,7 @@ function handleIncomingCall(peer, stream) {
 // DATA CONNECTION
 function dataConnectPeer(peer, otherPeer, stream) {
   var dataCon = peer.connect(otherPeer);
-  var textArea = document.querySelector('textArea');
-
   dataCon.on('open', function() {
-    console.log('from dataConnectPeer');
     transcribe(peer.id, dataCon);
     //send peers I'm connected to; same as yours?
     dataCon.send({peers: peers});
@@ -189,14 +190,13 @@ function dataConnectPeer(peer, otherPeer, stream) {
 
 function handleIncomingData(peer, stream) {
   peer.on('connection', function(dataCon) {
-    console.log('from handleIncomingData');
     transcribe(peer.id, dataCon);
     dataCon.on('open', function () {
       dataCon.send({peers: peers});
       dataCon.on('data', function(data) {
         if (data.script) {
-          var textArea = document.querySelector('textArea');
-          textArea.value+='\n'+data.script;
+          console.log('revieved data');
+          logTranscript(data.script);
         }
         handleNewPeers(data, peer, stream);
       });
@@ -234,7 +234,7 @@ function transcribe(peerID, dataCon) {
 
     try {
       var speechRecog = new window.SpeechRecognition();
-      var transcript = document.querySelector('textArea');
+      var transcript = '';
 
       //keep recording if user is silent
       //speechRecog.continuous = true;
@@ -242,12 +242,13 @@ function transcribe(peerID, dataCon) {
       //speechRecog.interimResults = true;
 
       speechRecog.onresult = function(event) {
-        transcript.value+=peerID+':';
+        transcript += peerID+':';
         dataCon.send({script: peerID+':'});
         for (var i = event.resultIndex; i < event.results.length; i++) {
-          transcript.value += event.results[i][0].transcript;
+          transcript += event.results[i][0].transcript;
           dataCon.send({script: event.results[i][0].transcript});
         }
+        logTranscript(transcript);
       };
 
       speechRecog.onend = function() {
