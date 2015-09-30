@@ -47,6 +47,8 @@ function showMyMedia(stream) {
   var video = document.createElement('video');
   video.setAttribute('id', 'localMedia');
   video.src = window.URL.createObjectURL(stream);
+  //prevent audio feedback
+  video.muted = true;
   var parentWidth = $('#localMediaContainer').width();
   $('#localMediaContainer').append(video);
   $('#localMedia').width(parentWidth);
@@ -300,10 +302,7 @@ function makePeerHeartbeater ( peer ) {
 //MAIN
 
 document.addEventListener('DOMContentLoaded', function() {
-  navigator.getUserMedia = ( navigator.getUserMedia ||
-    navigator.webkitGetUserMedia ||
-    navigator.mozGetUserMedia ||
-    navigator.msGetUserMedia);
+  navigator.getUserMedia = navigator.webkitGetUserMedia;
 
     navigator.getUserMedia({ video: {
       mandatory: { maxWidth: 1280, maxHeight: 720, minWidth: 1280, minHeight: 720, }},
@@ -312,7 +311,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var Peer = require('peerjs');
         //var peer = new Peer({key: 'xwx3jbch3vo8yqfr'});
         var peer = new Peer({host:'arcane-island-4855.herokuapp.com', secure:true, port:443, key: 'peerjs', debug: 3});
-        makePeerHeartbeater( peer );
+        makePeerHeartbeater(peer);
         console.log('peer ',peer);
 
         //display user's peer ID
