@@ -1,31 +1,251 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
+//Peer to Peer connection logic
 
-//GLOBAL VARS
-//keep track of who is in the call
+//REQUIRED MODULES
+var SpeechToText = require('./SpeechToText');
+var alterDOM = require('./alterDOM');
+
+//array of peers in call
 var peers = [];
-var $ = require('jquery');
 
-//HELPER FUNCTIONS
+function callPeer(peer, otherPeer, stream) {
+  if (peers.indexOf(otherPeer)>=0) {
+    console.log('you are already connected with this peer!');
+  }
 
-function nextSquare(n) {
-  var square = false;
-  while (!square) {
-    if (Number.isInteger(Math.sqrt(n))) {
-      square = true;
-    }
-    else {
-      n++;
+  else {
+    var call = peer.call(otherPeer, stream);
+    console.log('calling peer...');
+
+    call.on('stream', function(stream) {
+      //record that otherPeer is in the call
+      peers.push(otherPeer);
+      console.log('streaming call!');
+      alterDOM.showPeerMedia(stream, otherPeer);
+      //showHangUp(call, otherPeer);
+    });
+
+    call.on('close', function() {
+      console.log('call with ',otherPeer,' has ended!');
+      alterDOM.removePeerVideo(otherPeer);
+      peers = peers.filter(function(p) {
+        return p!==otherPeer;
+      });
+    });
+
+    call.on('error', function(error) {
+      //TODO: display error message to user
+      console.log(error.type);
+    });
+  }
+}
+
+function handleIncomingCall (peer, stream) {
+  peer.on('call', function (call) {
+    var otherPeer = call.peer;
+
+    console.log('answering call!');
+    peers.push(otherPeer);
+    call.answer(stream);
+
+    call.on('stream', function(stream) {
+      console.log('streaming call!');
+      alterDOM.showPeerMedia(stream, otherPeer);
+      //showHangUp(call, otherPeer);
+    });
+
+    call.on('close', function() {
+      console.log('call has ended!');
+      alterDOM.removePeerVideo(otherPeer);
+      peers = peers.filter(function(p) {
+        return p!==otherPeer;
+      });
+    });
+  });
+}
+
+function handleNewPeers(data, peer, stream) {
+  console.log('from handleNewPeers, ', data.peers);
+  var newPeers = data.peers.filter(function(p) {
+    return peers.indexOf(p)<0;
+  });
+  console.log('new peers: ',newPeers);
+
+  if (newPeers.length>0) {
+    //peers = peers.concat(newPeers);
+    newPeers.map(function(p) {
+      callPeer(peer, p, stream);
+    });
+  }
+}
+
+// DATA CONNECTION
+function dataConnectPeer(peer, otherPeer, stream) {
+  var dataCon = peer.connect(otherPeer);
+  dataCon.on('open', function() {
+    SpeechToText.transcribe(peer.id, dataCon);
+    //send peers I'm connected to; same as yours?
+    dataCon.send({peers: peers});
+    dataCon.on('data', function(data) {
+      if (data.script) {
+        alterDOM.logTranscript(data.script);
+      }
+      if (data.peers) {
+        handleNewPeers(data, peer, stream);
+      }
+    });
+  });
+
+  dataCon.on('error', function(error) {
+    //TODO: display error message to user
+    console.log(error.type);
+  });
+}
+
+ function handleIncomingData(peer, stream) {
+  peer.on('connection', function(dataCon) {
+    SpeechToText.ranscribe(peer.id, dataCon);
+    dataCon.on('open', function () {
+      dataCon.send({peers: peers});
+      dataCon.on('data', function(data) {
+        if (data.script) {
+          console.log('revieved data');
+          alterDOM.logTranscript(data.script);
+        }
+        if (data.peers) {
+          handleNewPeers(data, peer, stream);
+        }
+      });
+    });
+  });
+}
+
+//I DIDN'T WRITE THIS FUNCTION
+//source:
+function makePeerHeartbeater(peer) {
+  var timeoutId = 0;
+  function heartbeat () {
+    timeoutId = setTimeout( heartbeat, 20000 );
+    if ( peer.socket._wsOpen() ) {
+      peer.socket.send( {type:'HEARTBEAT'} );
     }
   }
-  return n;
+  // Start
+  heartbeat();
+  // return
+  return {
+    start : function () {
+      if ( timeoutId === 0 ) { heartbeat(); }
+    },
+    stop : function () {
+      clearTimeout( timeoutId );
+      timeoutId = 0;
+    }
+  };
+}
+
+exports.peers = peers;
+exports.callPeer = callPeer;
+exports.handleIncomingCall = handleIncomingCall;
+exports.dataConnectPeer = dataConnectPeer;
+exports.handleIncomingData = handleIncomingData;
+exports.handleNewPeers = handleNewPeers;
+exports.makePeerHeartbeater = makePeerHeartbeater;
+
+},{"./SpeechToText":2,"./alterDOM":3}],2:[function(require,module,exports){
+'use strict';
+// Speech to text logic
+
+//REQUIRED MODULES
+var alterDOM = require('./alterDOM');
+
+function transcribe(peerID, dataCon) {
+  window.SpeechRecognition =
+  window.SpeechRecognition ||
+  window.webkitSpeechRecognition ||
+  null;
+
+  if (window.SpeechRecognition === null) {
+    //TODO: display error!
+    console.log('could not locate speech recognizer');
+  }
+  else {
+
+    try {
+      var speechRecog = new window.SpeechRecognition();
+      //keep recording if user is silent
+      //speechRecog.continuous = true;
+      //show speech before onResult event fires
+      //speechRecog.interimResults = true;
+
+      speechRecog.onresult = function(event) {
+        var transcript = '';
+        for (var i = event.resultIndex; i < event.results.length; i++) {
+          if (i === 0) {
+            transcript = peerID+': '+event.results[i][0].transcript;
+          }
+          else {
+            transcript += event.results[i][0].transcript;
+          }
+          dataCon.send({script: transcript});
+        }
+        alterDOM.logTranscript(transcript);
+      };
+
+      speechRecog.onend = function() {
+        console.log('restarted speechRecog!');
+        if (dataCon.open) {
+          speechRecog.start();
+        }
+      };
+
+      speechRecog.start();
+      console.log('listening...');
+
+    }
+    catch(error) {
+      //TODO: display error to user
+      console.log('error from transcribe: ',error.message);
+    }
+  }
+}
+
+exports.transcribe = transcribe;
+
+},{"./alterDOM":3}],3:[function(require,module,exports){
+'use strict';
+//logic for  DOM manipulations
+
+//REQUIRED MODULES
+var P2P = require('./P2P');
+var util = require('./util');
+var $ = require('jquery');
+
+function bindCallClick (peer, stream) {
+  var button = document.querySelector('#connect');
+
+  button.addEventListener('click', function () {
+    var otherPeer = document.querySelector('#peerID').value;
+
+    if (otherPeer.length<=0) {
+      //TODO: display something to user
+      console.log('please enter a peer ID!');
+    }
+
+    else {
+      document.querySelector('#peerID').value = '';
+      P2P.callPeer(peer, otherPeer, stream);
+      P2P.dataConnectPeer(peer, otherPeer, stream);
+    }
+  });
 }
 
 function resizeVids() {
   var numVids = $('.peerVideo').length;
   var parentWidth = $('#videoContainer').width();
   if (numVids>1) {
-    var numVidsWide = Math.sqrt(nextSquare(numVids));
+    var numVidsWide = Math.sqrt(util.nextSquare(numVids));
     $('.peerVideo').width((parentWidth/numVidsWide)-10);
   }
   else {
@@ -33,7 +253,7 @@ function resizeVids() {
   }
 }
 
-function logTranscript (message) {
+function logTranscript(message) {
   console.log('from logTranscript');
   var entry = document.createElement('div');
   entry.className = 'message';
@@ -41,7 +261,6 @@ function logTranscript (message) {
   entry.appendChild(mes);
   document.querySelector('#transcript').appendChild(entry);
 }
-
 
 function showMyMedia(stream) {
   var video = document.createElement('video');
@@ -77,7 +296,7 @@ function showHangUp(call, otherPeer) {
   button.appendChild(document.createTextNode('Hang Up Call'));
   button.addEventListener('click', function() {
     call.close();
-    peers = peers.filter(function (p) {
+    P2P.peers = P2P.peers.filter(function (p) {
       return p!==otherPeer;
     });
   });
@@ -91,250 +310,73 @@ function removePeerVideo(otherPeer) {
   resizeVids();
 }
 
-function bindCallClick(peer, stream) {
-  var button = document.querySelector('#connect');
+exports.bindCallClick = bindCallClick;
+exports.resizeVids = resizeVids;
+exports.logTranscript = logTranscript;
+exports.showMyMedia = showMyMedia;
+exports.showPeerMedia = showPeerMedia;
+exports.showHangUp = showHangUp;
+exports.removePeerVideo = removePeerVideo;
 
-  button.addEventListener('click', function () {
-    var otherPeer = document.querySelector('#peerID').value;
+},{"./P2P":1,"./util":5,"jquery":6}],4:[function(require,module,exports){
+'use strict';
+//Main module
 
-    if (otherPeer.length<=0) {
-      //TODO: display something to user
-      console.log('please enter a peer ID!');
-    }
+//REQUIRED MODULES
+var $ = require('jquery');
+var Peer = require('peerjs');
+var P2P = require('./P2P');
+var alterDOM = require('./alterDOM');
 
-    else {
-      document.querySelector('#peerID').value = '';
-      callPeer(peer, otherPeer, stream);
-      dataConnectPeer(peer, otherPeer, stream);
-    }
-  });
-}
-
-//MEDIA CONNECTION
-function callPeer(peer, otherPeer, stream) {
-  if (peers.indexOf(otherPeer)>=0) {
-    console.log('you are already connected with this peer!');
-  }
-
-  else {
-    var call = peer.call(otherPeer, stream);
-    console.log('calling peer...');
-
-    call.on('stream', function(stream) {
-      //record that otherPeer is in the call
-      peers.push(otherPeer);
-      console.log('streaming call!');
-      showPeerMedia(stream, otherPeer);
-      //showHangUp(call, otherPeer);
-    });
-
-    call.on('close', function() {
-      console.log('call with ',otherPeer,' has ended!');
-      removePeerVideo(otherPeer);
-      peers = peers.filter(function(p) {
-        return p!==otherPeer;
-      });
-    });
-
-    call.on('error', function(error) {
-      //TODO: display error message to user
-      console.log(error.type);
-    });
-  }
-}
-
-function handleIncomingCall(peer, stream) {
-  peer.on('call', function (call) {
-    var otherPeer = call.peer;
-
-    console.log('answering call!');
-    peers.push(otherPeer);
-    call.answer(stream);
-
-    call.on('stream', function(stream) {
-      console.log('streaming call!');
-      showPeerMedia(stream, otherPeer);
-      //showHangUp(call, otherPeer);
-    });
-
-    call.on('close', function() {
-      console.log('call has ended!');
-      removePeerVideo(otherPeer);
-      peers = peers.filter(function(p) {
-        return p!==otherPeer;
-      });
-    });
-  });
-}
-
-// DATA CONNECTION
-function dataConnectPeer(peer, otherPeer, stream) {
-  var dataCon = peer.connect(otherPeer);
-  dataCon.on('open', function() {
-    transcribe(peer.id, dataCon);
-    //send peers I'm connected to; same as yours?
-    dataCon.send({peers: peers});
-    dataCon.on('data', function(data) {
-      if (data.script) {
-        logTranscript(data.script);
-      }
-      if (data.peers) {
-        handleNewPeers(data, peer, stream);
-      }
-    });
-  });
-
-  dataCon.on('error', function(error) {
-    //TODO: display error message to user
-    console.log(error.type);
-  });
-}
-
-function handleIncomingData(peer, stream) {
-  peer.on('connection', function(dataCon) {
-    transcribe(peer.id, dataCon);
-    dataCon.on('open', function () {
-      dataCon.send({peers: peers});
-      dataCon.on('data', function(data) {
-        if (data.script) {
-          console.log('revieved data');
-          logTranscript(data.script);
-        }
-        if (data.peers) {
-          handleNewPeers(data, peer, stream);
-        }
-      });
-    });
-  });
-}
-
-function handleNewPeers(data, peer, stream) {
-  console.log('from handleNewPeers, ', data.peers);
-  var newPeers = data.peers.filter(function(p) {
-    return peers.indexOf(p)<0;
-  });
-  console.log('new peers: ',newPeers);
-
-  if (newPeers.length>0) {
-    //peers = peers.concat(newPeers);
-    newPeers.map(function(p) {
-      callPeer(peer, p, stream);
-    });
-  }
-}
-
-// SPEECH TO TEXT
-function transcribe(peerID, dataCon) {
-  window.SpeechRecognition =
-  window.SpeechRecognition ||
-  window.webkitSpeechRecognition ||
-  null;
-
-  if (window.SpeechRecognition === null) {
-    //TODO: display error!
-    console.log('could not locate speech recognizer');
-  }
-  else {
-
-    try {
-      var speechRecog = new window.SpeechRecognition();
-      //keep recording if user is silent
-      //speechRecog.continuous = true;
-      //show speech before onResult event fires
-      //speechRecog.interimResults = true;
-
-      speechRecog.onresult = function(event) {
-        var transcript = '';
-        //var transcript = peerID+': ';
-        //dataCon.send({script: peerID+': '});
-        for (var i = event.resultIndex; i < event.results.length; i++) {
-          if (i === 0) {
-            transcript = peerID+': '+event.results[i][0].transcript;
-          }
-          else {
-            transcript += event.results[i][0].transcript;
-          }
-          dataCon.send({script: transcript});
-        }
-        logTranscript(transcript);
-      };
-
-      speechRecog.onend = function() {
-        console.log('restarted speechRecog!');
-        if (dataCon.open) {
-          speechRecog.start();
-        }
-      };
-
-      speechRecog.start();
-      console.log('listening...');
-
-    }
-    catch(error) {
-      //TODO: display error to user
-      console.log('error from transcribe: ',error.message);
-    }
-  }
-}
-
-function makePeerHeartbeater ( peer ) {
-  var timeoutId = 0;
-  function heartbeat () {
-    timeoutId = setTimeout( heartbeat, 20000 );
-    if ( peer.socket._wsOpen() ) {
-      peer.socket.send( {type:'HEARTBEAT'} );
-    }
-  }
-  // Start
-  heartbeat();
-  // return
-  return {
-    start : function () {
-      if ( timeoutId === 0 ) { heartbeat(); }
-    },
-    stop : function () {
-      clearTimeout( timeoutId );
-      timeoutId = 0;
-    }
-  };
-}
-
-//MAIN
-
+//On load, get mic and video data to ready P2P connectivity and
+//init peer object
 document.addEventListener('DOMContentLoaded', function() {
-  navigator.getUserMedia = navigator.webkitGetUserMedia;
 
-    navigator.getUserMedia({ video: {
+    navigator.webkitGetUserMedia({ video: {
       mandatory: { maxWidth: 1280, maxHeight: 720, minWidth: 1280, minHeight: 720, }},
       audio: true },
       function (stream) {
-        var Peer = require('peerjs');
-        //var peer = new Peer({key: 'xwx3jbch3vo8yqfr'});
+        //var peer = new Peer({key: 'xwx3jbch3vo8yqfr'});  //for testing
         var peer = new Peer({host:'arcane-island-4855.herokuapp.com', secure:true, port:443, key: 'peerjs', debug: 3});
-        makePeerHeartbeater(peer);
-        console.log('peer ',peer);
+        P2P.makePeerHeartbeater(peer);
 
-        //display user's peer ID
         peer.on('open', function(id) {
-          peers.push(id);
+          P2P.peers.push(id);
           document.querySelector('#myID').value = id;
-          showMyMedia(stream);
+          alterDOM.showMyMedia(stream);
         });
 
-        bindCallClick(peer, stream);
-        handleIncomingCall(peer, stream);
-        handleIncomingData(peer, stream);
+        alterDOM.bindCallClick(peer, stream);
+        P2P.handleIncomingCall(peer, stream);
+        P2P.handleIncomingData(peer, stream);
 
       }, function (err) {console.error(err);});
 
       $(window).resize(function () {
-        console.log('window resized');
-        resizeVids();
+        alterDOM.resizeVids();
       });
 
     }, false);
 
-},{"jquery":2,"peerjs":7}],2:[function(require,module,exports){
+},{"./P2P":1,"./alterDOM":3,"jquery":6,"peerjs":11}],5:[function(require,module,exports){
+'use strict';
+
+function nextSquare(n) {
+  var square = false;
+  while (!square) {
+    if (Number.isInteger(Math.sqrt(n))) {
+      square = true;
+    }
+    else {
+      n++;
+    }
+  }
+  return n;
+}
+
+exports.nextSquare = nextSquare;
+
+},{}],6:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.4
  * http://jquery.com/
@@ -9546,7 +9588,7 @@ return jQuery;
 
 }));
 
-},{}],3:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 module.exports.RTCSessionDescription = window.RTCSessionDescription ||
 	window.mozRTCSessionDescription;
 module.exports.RTCPeerConnection = window.RTCPeerConnection ||
@@ -9554,7 +9596,7 @@ module.exports.RTCPeerConnection = window.RTCPeerConnection ||
 module.exports.RTCIceCandidate = window.RTCIceCandidate ||
 	window.mozRTCIceCandidate;
 
-},{}],4:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 var util = require('./util');
 var EventEmitter = require('eventemitter3');
 var Negotiator = require('./negotiator');
@@ -9823,7 +9865,7 @@ DataConnection.prototype.handleMessage = function(message) {
 
 module.exports = DataConnection;
 
-},{"./negotiator":6,"./util":9,"eventemitter3":10,"reliable":13}],5:[function(require,module,exports){
+},{"./negotiator":10,"./util":13,"eventemitter3":14,"reliable":17}],9:[function(require,module,exports){
 var util = require('./util');
 var EventEmitter = require('eventemitter3');
 var Negotiator = require('./negotiator');
@@ -9920,7 +9962,7 @@ MediaConnection.prototype.close = function() {
 
 module.exports = MediaConnection;
 
-},{"./negotiator":6,"./util":9,"eventemitter3":10}],6:[function(require,module,exports){
+},{"./negotiator":10,"./util":13,"eventemitter3":14}],10:[function(require,module,exports){
 var util = require('./util');
 var RTCPeerConnection = require('./adapter').RTCPeerConnection;
 var RTCSessionDescription = require('./adapter').RTCSessionDescription;
@@ -10231,7 +10273,7 @@ Negotiator.handleCandidate = function(connection, ice) {
 
 module.exports = Negotiator;
 
-},{"./adapter":3,"./util":9}],7:[function(require,module,exports){
+},{"./adapter":7,"./util":13}],11:[function(require,module,exports){
 var util = require('./util');
 var EventEmitter = require('eventemitter3');
 var Socket = require('./socket');
@@ -10730,7 +10772,7 @@ Peer.prototype.listAllPeers = function(cb) {
 
 module.exports = Peer;
 
-},{"./dataconnection":4,"./mediaconnection":5,"./socket":8,"./util":9,"eventemitter3":10}],8:[function(require,module,exports){
+},{"./dataconnection":8,"./mediaconnection":9,"./socket":12,"./util":13,"eventemitter3":14}],12:[function(require,module,exports){
 var util = require('./util');
 var EventEmitter = require('eventemitter3');
 
@@ -10946,7 +10988,7 @@ Socket.prototype.close = function() {
 
 module.exports = Socket;
 
-},{"./util":9,"eventemitter3":10}],9:[function(require,module,exports){
+},{"./util":13,"eventemitter3":14}],13:[function(require,module,exports){
 var defaultConfig = {'iceServers': [{ 'url': 'stun:stun.l.google.com:19302' }]};
 var dataCount = 1;
 
@@ -11262,7 +11304,7 @@ var util = {
 
 module.exports = util;
 
-},{"./adapter":3,"js-binarypack":11}],10:[function(require,module,exports){
+},{"./adapter":7,"js-binarypack":15}],14:[function(require,module,exports){
 'use strict';
 
 /**
@@ -11493,7 +11535,7 @@ EventEmitter.EventEmitter3 = EventEmitter;
 //
 module.exports = EventEmitter;
 
-},{}],11:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 var BufferBuilder = require('./bufferbuilder').BufferBuilder;
 var binaryFeatures = require('./bufferbuilder').binaryFeatures;
 
@@ -12014,7 +12056,7 @@ function utf8Length(str){
   }
 }
 
-},{"./bufferbuilder":12}],12:[function(require,module,exports){
+},{"./bufferbuilder":16}],16:[function(require,module,exports){
 var binaryFeatures = {};
 binaryFeatures.useBlobBuilder = (function(){
   try {
@@ -12080,7 +12122,7 @@ BufferBuilder.prototype.getBuffer = function() {
 
 module.exports.BufferBuilder = BufferBuilder;
 
-},{}],13:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 var util = require('./util');
 
 /**
@@ -12400,7 +12442,7 @@ Reliable.prototype.onmessage = function(msg) {};
 
 module.exports.Reliable = Reliable;
 
-},{"./util":14}],14:[function(require,module,exports){
+},{"./util":18}],18:[function(require,module,exports){
 var BinaryPack = require('js-binarypack');
 
 var util = {
@@ -12497,4 +12539,4 @@ var util = {
 
 module.exports = util;
 
-},{"js-binarypack":11}]},{},[1]);
+},{"js-binarypack":15}]},{},[4]);

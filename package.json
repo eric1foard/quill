@@ -6,11 +6,6 @@
     "masonry-layout": "^3.3.2",
     "peerjs": "^0.3.14"
   },
-  "browserify": {
-    "transform": [
-      "reactify"
-    ]
-  },
   "devDependencies": {
     "grunt": "~0.4.1",
     "grunt-contrib-copy": "~0.5.0",
