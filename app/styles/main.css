@@ -40,6 +40,7 @@ input {
   background-color: #21252B;
   flex: 1;
   overflow: scroll;
+  height: 75vh;
 }
 
 #alerts {
