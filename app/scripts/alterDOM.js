@@ -95,6 +95,24 @@ function removePeerVideo(otherPeer) {
   resizeVids();
 }
 
+function makeAlert(message) {
+  var alerts = document.querySelector('#alerts');
+  var alert = document.createElement('div');
+  alert.className = 'alert alert-danger';
+  var close = document.createElement('a');
+  close.setAttribute('href', '#');
+  close.className = 'close';
+  close.setAttribute('data-dismiss','alert');
+  close.setAttribute('aria-label','close');
+  var x = document.createTextNode('x');
+  close.appendChild(x);
+  var msg = document.createTextNode(message);
+  alert.appendChild(msg);
+  alert.appendChild(close);
+  alerts.appendChild(alert);
+}
+
+exports.makeAlert = makeAlert;
 exports.bindCallClick = bindCallClick;
 exports.resizeVids = resizeVids;
 exports.logTranscript = logTranscript;

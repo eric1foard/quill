@@ -9,21 +9,30 @@
 </head>
 <body>
 
-<div id="videoContainer">
-  <form class="navbar-form navbar-left" role="search">
-  <div class="form-group">
-    <input id="myID" type="text" class="form-control" readonly>
-    <input id="peerID" type="text" class="form-control" placeholder="Peer's ID">
-    <button id="connect" type="button" class="btn btn-default">Submit</button>
-
+  <div id="videoContainer">
+    <div class="row">
+      <div class="col-lg-7">
+        <form class="navbar-form navbar-left">
+          <div class="form-group">
+            <input id="myID" type="text" class="form-control" readonly>
+            <input id="peerID" type="text" class="form-control" placeholder="Peer's ID">
+            <button id="connect" type="button" class="btn btn-default">Submit</button>
+          </div>
+        </form>
+      </div>
+      <div id="alerts" class="col-lg-5">
+        <div class="alert alert-success">
+  <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+  <strong>Welcome!</strong> Enter a peer ID or share yours to get started.
+</div>
+      </div>
+    </div>
   </div>
-</form>
 
-</div>
-<div id="tools">
-  <div id="transcript"></div>
-  <div id="localMediaContainer"></div>
-</div>
+  <div id="tools">
+    <div id="transcript"></div>
+    <div id="localMediaContainer"></div>
+  </div>
 
 </body>
 </html>

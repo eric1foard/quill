@@ -11,8 +11,7 @@ function transcribe(peerID, dataCon) {
   null;
 
   if (window.SpeechRecognition === null) {
-    //TODO: display error!
-    console.log('could not locate speech recognizer');
+    alterDOM.makeAlert('could not locate speech recognizer');
   }
   else {
 
@@ -50,7 +49,7 @@ function transcribe(peerID, dataCon) {
     }
     catch(error) {
       //TODO: display error to user
-      console.log('error from transcribe: ',error.message);
+      alterDOM.makeAlert('error when transcribing: '+error.message);
     }
   }
 }

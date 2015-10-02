@@ -10,19 +10,18 @@ var peers = [];
 
 function callPeer(peer, otherPeer, stream) {
   if (peers.indexOf(otherPeer)>=0) {
-    console.log('you are already connected with this peer!');
+    alterDOM.makeAlert('you are already connected with this peer!');
   }
 
   else {
     var call = peer.call(otherPeer, stream);
-    console.log('calling peer...');
 
     call.on('stream', function(stream) {
       //record that otherPeer is in the call
       peers.push(otherPeer);
       console.log('streaming call!');
       alterDOM.showPeerMedia(stream, otherPeer);
-      //showHangUp(call, otherPeer);
+      //alterDOM.showHangUp(call, otherPeer);
     });
 
     call.on('close', function() {
@@ -34,8 +33,7 @@ function callPeer(peer, otherPeer, stream) {
     });
 
     call.on('error', function(error) {
-      //TODO: display error message to user
-      console.log(error.type);
+      alterDOM.makeAlert('there was a problem completing the call: '+error.type+ '. Try again!');
     });
   }
 }
@@ -97,14 +95,13 @@ function dataConnectPeer(peer, otherPeer, stream) {
   });
 
   dataCon.on('error', function(error) {
-    //TODO: display error message to user
-    console.log(error.type);
+    alterDOM.makeAlert('there was a problem with the data connection: '+error.type+ '. Try again!');
   });
 }
 
  function handleIncomingData(peer, stream) {
   peer.on('connection', function(dataCon) {
-    SpeechToText.ranscribe(peer.id, dataCon);
+    SpeechToText.transcribe(peer.id, dataCon);
     dataCon.on('open', function () {
       dataCon.send({peers: peers});
       dataCon.on('data', function(data) {
@@ -149,5 +146,4 @@ exports.callPeer = callPeer;
 exports.handleIncomingCall = handleIncomingCall;
 exports.dataConnectPeer = dataConnectPeer;
 exports.handleIncomingData = handleIncomingData;
-exports.handleNewPeers = handleNewPeers;
 exports.makePeerHeartbeater = makePeerHeartbeater;

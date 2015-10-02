@@ -15,6 +15,11 @@ body {
   flex: 3;
 }
 
+.alert {
+  height: 38px;
+  line-height: 10px;
+}
+
 #controls {
   color: #95a5a6;
   padding-top: 10px;
@@ -35,6 +40,12 @@ input {
   background-color: #21252B;
   flex: 1;
   overflow: scroll;
+}
+
+#alerts {
+  margin-left: -9%;
+  margin-top: 10px;
+  height: 10px;
 }
 
 .peerVideo {

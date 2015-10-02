@@ -23,7 +23,7 @@ function callPeer(peer, otherPeer, stream) {
       peers.push(otherPeer);
       console.log('streaming call!');
       alterDOM.showPeerMedia(stream, otherPeer);
-      //showHangUp(call, otherPeer);
+      //alterDOM.showHangUp(call, otherPeer);
     });
 
     call.on('close', function() {
@@ -41,7 +41,7 @@ function callPeer(peer, otherPeer, stream) {
   }
 }
 
-function handleIncomingCall (peer, stream) {
+function handleIncomingCall(peer, stream) {
   peer.on('call', function (call) {
     var otherPeer = call.peer;
 
@@ -105,7 +105,7 @@ function dataConnectPeer(peer, otherPeer, stream) {
 
  function handleIncomingData(peer, stream) {
   peer.on('connection', function(dataCon) {
-    SpeechToText.ranscribe(peer.id, dataCon);
+    SpeechToText.transcribe(peer.id, dataCon);
     dataCon.on('open', function () {
       dataCon.send({peers: peers});
       dataCon.on('data', function(data) {
@@ -150,7 +150,6 @@ exports.callPeer = callPeer;
 exports.handleIncomingCall = handleIncomingCall;
 exports.dataConnectPeer = dataConnectPeer;
 exports.handleIncomingData = handleIncomingData;
-exports.handleNewPeers = handleNewPeers;
 exports.makePeerHeartbeater = makePeerHeartbeater;
 
 },{"./SpeechToText":2,"./alterDOM":3}],2:[function(require,module,exports){
@@ -222,7 +221,8 @@ var P2P = require('./P2P');
 var util = require('./util');
 var $ = require('jquery');
 
-function bindCallClick (peer, stream) {
+
+function bindCallClick(peer, stream) {
   var button = document.querySelector('#connect');
 
   button.addEventListener('click', function () {
@@ -310,6 +310,24 @@ function removePeerVideo(otherPeer) {
   resizeVids();
 }
 
+function makeAlert(message) {
+  var alerts = document.querySelector('#alerts');
+  var alert = document.createElement('div');
+  alert.className = 'alert alert-danger';
+  var close = document.createElement('a');
+  close.setAttribute('href', '#');
+  close.className = 'close';
+  close.setAttribute('data-dismiss','alert');
+  close.setAttribute('aria-label','close');
+  var x = document.createTextNode('x');
+  close.appendChild(x);
+  var msg = document.createTextNode(message);
+  alert.appendChild(msg);
+  alert.appendChild(close);
+  alerts.appendChild(alert);
+}
+
+exports.makeAlert = makeAlert;
 exports.bindCallClick = bindCallClick;
 exports.resizeVids = resizeVids;
 exports.logTranscript = logTranscript;
@@ -337,13 +355,14 @@ document.addEventListener('DOMContentLoaded', function() {
       audio: true },
       function (stream) {
         //var peer = new Peer({key: 'xwx3jbch3vo8yqfr'});  //for testing
-        var peer = new Peer({host:'arcane-island-4855.herokuapp.com', secure:true, port:443, key: 'peerjs', debug: 3});
+        var peer = new Peer({host:'arcane-island-4855.herokuapp.com', secure:true, port:443, key: 'peerjs'});
         P2P.makePeerHeartbeater(peer);
 
         peer.on('open', function(id) {
           P2P.peers.push(id);
           document.querySelector('#myID').value = id;
           alterDOM.showMyMedia(stream);
+          alterDOM.makeAlert('HEY! just testing');
         });
 
         alterDOM.bindCallClick(peer, stream);
