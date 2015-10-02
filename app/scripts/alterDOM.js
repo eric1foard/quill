@@ -5,6 +5,7 @@
 var P2P = require('./P2P');
 var util = require('./util');
 var $ = require('jquery');
+var alterDOM = require('./alterDOM');
 
 
 function bindCallClick(peer, stream) {
@@ -15,7 +16,7 @@ function bindCallClick(peer, stream) {
 
     if (otherPeer.length<=0) {
       //TODO: display something to user
-      console.log('please enter a peer ID!');
+      alterDOM.makeAlert('please enter a peer ID!');
     }
 
     else {
@@ -71,6 +72,7 @@ function showPeerMedia(stream, otherPeer) {
     video.play();
   }
   catch(error) {
+    alterDOM.makeAlert('there was a problem displaying ',otherPeer,'\'s video. ');
     console.log('there was a problem displaying ',otherPeer,'\'s video. ',error);
   }
 }

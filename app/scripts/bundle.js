@@ -11,12 +11,11 @@ var peers = [];
 
 function callPeer(peer, otherPeer, stream) {
   if (peers.indexOf(otherPeer)>=0) {
-    console.log('you are already connected with this peer!');
+    alterDOM.makeAlert('you are already connected with this peer!');
   }
 
   else {
     var call = peer.call(otherPeer, stream);
-    console.log('calling peer...');
 
     call.on('stream', function(stream) {
       //record that otherPeer is in the call
@@ -35,8 +34,7 @@ function callPeer(peer, otherPeer, stream) {
     });
 
     call.on('error', function(error) {
-      //TODO: display error message to user
-      console.log(error.type);
+      alterDOM.makeAlert('there was a problem completing the call: '+error.type+ '. Try again!');
     });
   }
 }
@@ -98,8 +96,7 @@ function dataConnectPeer(peer, otherPeer, stream) {
   });
 
   dataCon.on('error', function(error) {
-    //TODO: display error message to user
-    console.log(error.type);
+    alterDOM.makeAlert('there was a problem with the data connection: '+error.type+ '. Try again!');
   });
 }
 
@@ -166,8 +163,7 @@ function transcribe(peerID, dataCon) {
   null;
 
   if (window.SpeechRecognition === null) {
-    //TODO: display error!
-    console.log('could not locate speech recognizer');
+    alterDOM.makeAlert('could not locate speech recognizer');
   }
   else {
 
@@ -205,7 +201,7 @@ function transcribe(peerID, dataCon) {
     }
     catch(error) {
       //TODO: display error to user
-      console.log('error from transcribe: ',error.message);
+      alterDOM.makeAlert('error when transcribing: '+error.message);
     }
   }
 }
@@ -362,7 +358,7 @@ document.addEventListener('DOMContentLoaded', function() {
           P2P.peers.push(id);
           document.querySelector('#myID').value = id;
           alterDOM.showMyMedia(stream);
-          alterDOM.makeAlert('HEY! just testing');
+          alterDOM.makeAlert('hey hey!');
         });
 
         alterDOM.bindCallClick(peer, stream);
