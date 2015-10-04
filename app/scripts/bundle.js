@@ -21,8 +21,7 @@ function callPeer(peer, otherPeer, stream) {
       //record that otherPeer is in the call
       peers.push(otherPeer);
       console.log('streaming call!');
-      alterDOM.showPeerMedia(stream, otherPeer);
-      //alterDOM.showHangUp(call, otherPeer);
+      alterDOM.showPeerMedia(stream, call, otherPeer);
     });
 
     call.on('close', function() {
@@ -49,8 +48,7 @@ function handleIncomingCall(peer, stream) {
 
     call.on('stream', function(stream) {
       console.log('streaming call!');
-      alterDOM.showPeerMedia(stream, otherPeer);
-      //showHangUp(call, otherPeer);
+      alterDOM.showPeerMedia(stream, call, otherPeer);
     });
 
     call.on('close', function() {
@@ -271,40 +269,59 @@ function showMyMedia(stream) {
   video.play();
 }
 
-function showPeerMedia(stream, otherPeer) {
-  try {
-    var video = document.createElement('video');
-    video.setAttribute('id', otherPeer);
-    video.setAttribute('class', 'peerVideo');
-    var videoContainer = document.querySelector('#videoContainer');
-    videoContainer.appendChild(video);
-    video.src = window.URL.createObjectURL(stream);
-    resizeVids();
-    video.play();
-  }
-  catch(error) {
-    alterDOM.makeAlert('there was a problem displaying ',otherPeer,'\'s video. ');
-    console.log('there was a problem displaying ',otherPeer,'\'s video. ',error);
-  }
-}
-
-function showHangUp(call, otherPeer) {
+function bindHangUp(call, otherPeer) {
   var button = document.createElement('button');
-  button.id = 'hangup'+otherPeer;
-  button.appendChild(document.createTextNode('Hang Up Call'));
+  button.className = 'hangup btn btn-danger';
+
+  var pos = $('#'+otherPeer).position();
+  button.style.top = pos.top;
+  button.style.left = pos.left;
+
+  button.appendChild(document.createTextNode('hang up'));
+
   button.addEventListener('click', function() {
     call.close();
     P2P.peers = P2P.peers.filter(function (p) {
       return p!==otherPeer;
     });
   });
-  document.body.appendChild(button);
+
+  return button;
+}
+
+function showPeerMedia(stream, call, otherPeer) {
+  try {
+    
+    //container for video and hangup button
+    var div = document.createElement('div');
+    div.setAttribute('class', 'peerVideoCont');
+    div.setAttribute('id', 'cont'+otherPeer);
+
+    var video = document.createElement('video');
+    video.src = window.URL.createObjectURL(stream);
+    video.setAttribute('class', 'peerVideo');
+    video.setAttribute('id', otherPeer);
+
+    var videoContainer = document.querySelector('#videoContainer');
+    div.appendChild(video);
+    videoContainer.appendChild(div);
+
+    resizeVids();
+    video.play();
+
+    //need position of video, so append after resizeVids
+    var button = bindHangUp(call, otherPeer);
+    div.appendChild(button);
+  }
+  catch(error) {
+    alterDOM.makeAlert('there was a problem displaying ',otherPeer,'\'s video.');
+    console.log('there was a problem displaying ',otherPeer,'\'s video. ',error);
+  }
 }
 
 function removePeerVideo(otherPeer) {
-  //document.body.removeChild(document.getElementById('hangup'+otherPeer));
   var videoContainer = document.querySelector('#videoContainer');
-  videoContainer.removeChild(document.getElementById(otherPeer));
+  videoContainer.removeChild(document.getElementById('cont'+otherPeer));
   resizeVids();
 }
 
@@ -331,7 +348,6 @@ exports.resizeVids = resizeVids;
 exports.logTranscript = logTranscript;
 exports.showMyMedia = showMyMedia;
 exports.showPeerMedia = showPeerMedia;
-exports.showHangUp = showHangUp;
 exports.removePeerVideo = removePeerVideo;
 
 },{"./P2P":1,"./alterDOM":3,"./util":5,"jquery":6}],4:[function(require,module,exports){
@@ -360,28 +376,6 @@ document.addEventListener('DOMContentLoaded', function() {
           P2P.peers.push(id);
           document.querySelector('#myID').value = id;
           alterDOM.showMyMedia(stream);
-
-          //TEST
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('END END END');
         });
 
         alterDOM.bindCallClick(peer, stream);

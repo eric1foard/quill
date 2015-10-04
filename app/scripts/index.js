@@ -23,28 +23,6 @@ document.addEventListener('DOMContentLoaded', function() {
           P2P.peers.push(id);
           document.querySelector('#myID').value = id;
           alterDOM.showMyMedia(stream);
-
-          //TEST
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('hey you!');
-          alterDOM.logTranscript('END END END');
         });
 
         alterDOM.bindCallClick(peer, stream);

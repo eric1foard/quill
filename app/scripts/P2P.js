@@ -20,8 +20,7 @@ function callPeer(peer, otherPeer, stream) {
       //record that otherPeer is in the call
       peers.push(otherPeer);
       console.log('streaming call!');
-      alterDOM.showPeerMedia(stream, otherPeer);
-      //alterDOM.showHangUp(call, otherPeer);
+      alterDOM.showPeerMedia(stream, call, otherPeer);
     });
 
     call.on('close', function() {
@@ -48,8 +47,7 @@ function handleIncomingCall(peer, stream) {
 
     call.on('stream', function(stream) {
       console.log('streaming call!');
-      alterDOM.showPeerMedia(stream, otherPeer);
-      //showHangUp(call, otherPeer);
+      alterDOM.showPeerMedia(stream, call, otherPeer);
     });
 
     call.on('close', function() {

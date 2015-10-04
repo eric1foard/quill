@@ -13,6 +13,7 @@ body {
 #videoContainer {
   background-color: #282C34;
   flex: 3;
+  position: relative;
 }
 
 .alert {
@@ -49,8 +50,20 @@ input {
   height: 10px;
 }
 
+.peerVideoCont {
+  position: relative;
+  /*shirkwrap video and hangup button*/
+  display: inline-block;
+}
+
 .peerVideo {
-  display: inline-flex;
+  z-index: 0;
+  margin: 0px;
+}
+
+.hangup {
+  position: absolute;
+  z-index: 1;
 }
 
 #localMediaContainer {
