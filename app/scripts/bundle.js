@@ -3,7 +3,7 @@
 //Peer to Peer connection logic
 
 //REQUIRED MODULES
-var SpeechToText = require('./SpeechToText');
+var speechToText = require('./speechToText');
 var alterDOM = require('./alterDOM');
 
 //array of peers in call
@@ -80,11 +80,12 @@ function handleNewPeers(data, peer, stream) {
 function dataConnectPeer(peer, otherPeer, stream) {
   var dataCon = peer.connect(otherPeer);
   dataCon.on('open', function() {
-    SpeechToText.transcribe(peer.id, dataCon);
+    speechToText.transcribe(peer.id, dataCon);
     //send peers I'm connected to; same as yours?
     dataCon.send({peers: peers});
     dataCon.on('data', function(data) {
       if (data.script) {
+        speechToText.transcriptAppend(data.script);
         alterDOM.logTranscript(data.script);
       }
       if (data.peers) {
@@ -100,12 +101,13 @@ function dataConnectPeer(peer, otherPeer, stream) {
 
  function handleIncomingData(peer, stream) {
   peer.on('connection', function(dataCon) {
-    SpeechToText.transcribe(peer.id, dataCon);
+    speechToText.transcribe(peer.id, dataCon);
     dataCon.on('open', function () {
       dataCon.send({peers: peers});
       dataCon.on('data', function(data) {
         if (data.script) {
           console.log('revieved data');
+          speechToText.transcriptAppend(data.script);
           alterDOM.logTranscript(data.script);
         }
         if (data.peers) {
@@ -147,66 +149,7 @@ exports.dataConnectPeer = dataConnectPeer;
 exports.handleIncomingData = handleIncomingData;
 exports.makePeerHeartbeater = makePeerHeartbeater;
 
-},{"./SpeechToText":2,"./alterDOM":3}],2:[function(require,module,exports){
-'use strict';
-// Speech to text logic
-
-//REQUIRED MODULES
-var alterDOM = require('./alterDOM');
-
-function transcribe(peerID, dataCon) {
-  window.SpeechRecognition =
-  window.SpeechRecognition ||
-  window.webkitSpeechRecognition ||
-  null;
-
-  if (window.SpeechRecognition === null) {
-    alterDOM.makeAlert('could not locate speech recognizer');
-  }
-  else {
-
-    try {
-      var speechRecog = new window.SpeechRecognition();
-      //keep recording if user is silent
-      //speechRecog.continuous = true;
-      //show speech before onResult event fires
-      //speechRecog.interimResults = true;
-
-      speechRecog.onresult = function(event) {
-        var transcript = '';
-        for (var i = event.resultIndex; i < event.results.length; i++) {
-          if (i === 0) {
-            transcript = peerID+': '+event.results[i][0].transcript;
-          }
-          else {
-            transcript += event.results[i][0].transcript;
-          }
-          dataCon.send({script: transcript});
-        }
-        alterDOM.logTranscript(transcript);
-      };
-
-      speechRecog.onend = function() {
-        console.log('restarted speechRecog!');
-        if (dataCon.open) {
-          speechRecog.start();
-        }
-      };
-
-      speechRecog.start();
-      console.log('listening...');
-
-    }
-    catch(error) {
-      //TODO: display error to user
-      alterDOM.makeAlert('error when transcribing: '+error.message);
-    }
-  }
-}
-
-exports.transcribe = transcribe;
-
-},{"./alterDOM":3}],3:[function(require,module,exports){
+},{"./alterDOM":2,"./speechToText":4}],2:[function(require,module,exports){
 'use strict';
 //logic for  DOM manipulations
 
@@ -252,6 +195,7 @@ function logTranscript(message) {
   console.log('from logTranscript');
   var entry = document.createElement('div');
   entry.className = 'message';
+
   var mes = document.createTextNode(message);
   entry.appendChild(mes);
   document.querySelector('#transcript').appendChild(entry);
@@ -291,7 +235,7 @@ function bindHangUp(call, otherPeer) {
 
 function showPeerMedia(stream, call, otherPeer) {
   try {
-    
+
     //container for video and hangup button
     var div = document.createElement('div');
     div.setAttribute('class', 'peerVideoCont');
@@ -329,14 +273,18 @@ function makeAlert(message) {
   var alerts = document.querySelector('#alerts');
   var alert = document.createElement('div');
   alert.className = 'alert alert-danger';
+
   var close = document.createElement('a');
   close.setAttribute('href', '#');
   close.className = 'close';
   close.setAttribute('data-dismiss','alert');
   close.setAttribute('aria-label','close');
+
   var x = document.createTextNode('x');
   close.appendChild(x);
+
   var msg = document.createTextNode(message);
+
   alert.appendChild(msg);
   alert.appendChild(close);
   alerts.appendChild(alert);
@@ -350,7 +298,7 @@ exports.showMyMedia = showMyMedia;
 exports.showPeerMedia = showPeerMedia;
 exports.removePeerVideo = removePeerVideo;
 
-},{"./P2P":1,"./alterDOM":3,"./util":5,"jquery":6}],4:[function(require,module,exports){
+},{"./P2P":1,"./alterDOM":2,"./util":5,"jquery":6}],3:[function(require,module,exports){
 'use strict';
 //Main module
 
@@ -359,38 +307,129 @@ var $ = require('jquery');
 var Peer = require('peerjs');
 var P2P = require('./P2P');
 var alterDOM = require('./alterDOM');
+var speechToText = require('./speechToText');
 
 //On load, get mic and video data to ready P2P connectivity and
 //init peer object
 document.addEventListener('DOMContentLoaded', function() {
 
-    navigator.webkitGetUserMedia({ video: {
-      mandatory: { maxWidth: 1280, maxHeight: 720, minWidth: 1280, minHeight: 720, }},
-      audio: true },
-      function (stream) {
-        //var peer = new Peer({key: 'xwx3jbch3vo8yqfr'});  //for testing
-        var peer = new Peer({host:'arcane-island-4855.herokuapp.com', secure:true, port:443, key: 'peerjs'});
-        P2P.makePeerHeartbeater(peer);
+  speechToText.bindDownloadClick();
 
-        peer.on('open', function(id) {
-          P2P.peers.push(id);
-          document.querySelector('#myID').value = id;
-          alterDOM.showMyMedia(stream);
-        });
+  navigator.webkitGetUserMedia({ video: {
+    mandatory: { maxWidth: 1280, maxHeight: 720, minWidth: 1280, minHeight: 720, }},
+    audio: true },
+    function (stream) {
+      //var peer = new Peer({key: 'xwx3jbch3vo8yqfr'});  //for testing
+      var peer = new Peer({host:'arcane-island-4855.herokuapp.com', secure:true, port:443, key: 'peerjs'});
+      P2P.makePeerHeartbeater(peer);
 
-        alterDOM.bindCallClick(peer, stream);
-        P2P.handleIncomingCall(peer, stream);
-        P2P.handleIncomingData(peer, stream);
-
-      }, function (err) {console.error(err);});
-
-      $(window).resize(function () {
-        alterDOM.resizeVids();
+      peer.on('open', function(id) {
+        P2P.peers.push(id);
+        document.querySelector('#myID').value = id;
+        alterDOM.showMyMedia(stream);
       });
 
-    }, false);
+      alterDOM.bindCallClick(peer, stream);
+      P2P.handleIncomingCall(peer, stream);
+      P2P.handleIncomingData(peer, stream);
 
-},{"./P2P":1,"./alterDOM":3,"jquery":6,"peerjs":11}],5:[function(require,module,exports){
+    }, function (err) {console.error(err);});
+
+    $(window).resize(function () {
+      alterDOM.resizeVids();
+    });
+
+  }, false);
+
+},{"./P2P":1,"./alterDOM":2,"./speechToText":4,"jquery":6,"peerjs":11}],4:[function(require,module,exports){
+'use strict';
+// Speech to text logic
+
+//REQUIRED MODULES
+var alterDOM = require('./alterDOM');
+
+//buffer for transcript
+var text = '';
+
+function transcriptAppend(message) {
+  text += message + '\n';
+}
+
+function transcribe(peerID, dataCon) {
+  window.SpeechRecognition =
+  window.SpeechRecognition ||
+  window.webkitSpeechRecognition ||
+  null;
+
+  if (window.SpeechRecognition === null) {
+    alterDOM.makeAlert('could not locate speech recognizer');
+  }
+  else {
+
+    try {
+      var speechRecog = new window.SpeechRecognition();
+
+      //keep recording if user is silent
+      //speechRecog.continuous = true;
+      //show speech before onResult event fires
+      //speechRecog.interimResults = true;
+
+      speechRecog.onresult = function(event) {
+        var transcript = '';
+        for (var i = event.resultIndex; i < event.results.length; i++) {
+          if (i === 0) {
+            transcript = peerID+': '+event.results[i][0].transcript;
+          }
+          else {
+            transcript += event.results[i][0].transcript;
+          }
+          dataCon.send({script: transcript});
+        }
+        transcriptAppend(transcript);
+        alterDOM.logTranscript(transcript);
+      };
+
+      speechRecog.onend = function() {
+        console.log('restarted speechRecog!');
+        if (dataCon.open) {
+          speechRecog.start();
+        }
+      };
+
+      speechRecog.start();
+      console.log('listening...');
+
+    }
+    catch(error) {
+      //TODO: display error to user
+      alterDOM.makeAlert('error when transcribing: '+error.message);
+    }
+  }
+}
+
+function bindDownloadClick() {
+  var a = document.getElementById('download');
+
+  a.addEventListener('click', function() {
+    if (text === '') {
+      alterDOM.makeAlert('transcript is empty!');
+    }
+    else {
+      console.log('from bindDownloadClick');
+      var file = new Blob([text]);
+      var url = window.URL.createObjectURL(file);
+      var date = new Date();
+      a.setAttribute('download', date.getTime().toString());
+      a.setAttribute('href', url);
+    }
+  });
+}
+
+exports.transcriptAppend = transcriptAppend;
+exports.bindDownloadClick = bindDownloadClick;
+exports.transcribe = transcribe;
+
+},{"./alterDOM":2}],5:[function(require,module,exports){
 'use strict';
 
 function nextSquare(n) {
@@ -12571,4 +12610,4 @@ var util = {
 
 module.exports = util;
 
-},{"js-binarypack":15}]},{},[4]);
+},{"js-binarypack":15}]},{},[3]);

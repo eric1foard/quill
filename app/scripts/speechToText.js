@@ -4,6 +4,13 @@
 //REQUIRED MODULES
 var alterDOM = require('./alterDOM');
 
+//buffer for transcript
+var text = '';
+
+function transcriptAppend(message) {
+  text += message + '\n';
+}
+
 function transcribe(peerID, dataCon) {
   window.SpeechRecognition =
   window.SpeechRecognition ||
@@ -17,6 +24,7 @@ function transcribe(peerID, dataCon) {
 
     try {
       var speechRecog = new window.SpeechRecognition();
+
       //keep recording if user is silent
       //speechRecog.continuous = true;
       //show speech before onResult event fires
@@ -33,6 +41,7 @@ function transcribe(peerID, dataCon) {
           }
           dataCon.send({script: transcript});
         }
+        transcriptAppend(transcript);
         alterDOM.logTranscript(transcript);
       };
 
@@ -54,4 +63,24 @@ function transcribe(peerID, dataCon) {
   }
 }
 
+function bindDownloadClick() {
+  var a = document.getElementById('download');
+
+  a.addEventListener('click', function() {
+    if (text === '') {
+      alterDOM.makeAlert('transcript is empty!');
+    }
+    else {
+      console.log('from bindDownloadClick');
+      var file = new Blob([text]);
+      var url = window.URL.createObjectURL(file);
+      var date = new Date();
+      a.setAttribute('download', date.getTime().toString());
+      a.setAttribute('href', url);
+    }
+  });
+}
+
+exports.transcriptAppend = transcriptAppend;
+exports.bindDownloadClick = bindDownloadClick;
 exports.transcribe = transcribe;

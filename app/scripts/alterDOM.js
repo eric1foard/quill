@@ -43,6 +43,7 @@ function logTranscript(message) {
   console.log('from logTranscript');
   var entry = document.createElement('div');
   entry.className = 'message';
+
   var mes = document.createTextNode(message);
   entry.appendChild(mes);
   document.querySelector('#transcript').appendChild(entry);
@@ -82,7 +83,7 @@ function bindHangUp(call, otherPeer) {
 
 function showPeerMedia(stream, call, otherPeer) {
   try {
-    
+
     //container for video and hangup button
     var div = document.createElement('div');
     div.setAttribute('class', 'peerVideoCont');
@@ -120,14 +121,18 @@ function makeAlert(message) {
   var alerts = document.querySelector('#alerts');
   var alert = document.createElement('div');
   alert.className = 'alert alert-danger';
+
   var close = document.createElement('a');
   close.setAttribute('href', '#');
   close.className = 'close';
   close.setAttribute('data-dismiss','alert');
   close.setAttribute('aria-label','close');
+
   var x = document.createTextNode('x');
   close.appendChild(x);
+
   var msg = document.createTextNode(message);
+
   alert.appendChild(msg);
   alert.appendChild(close);
   alerts.appendChild(alert);

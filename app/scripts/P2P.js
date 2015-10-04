@@ -2,7 +2,7 @@
 //Peer to Peer connection logic
 
 //REQUIRED MODULES
-var SpeechToText = require('./SpeechToText');
+var speechToText = require('./speechToText');
 var alterDOM = require('./alterDOM');
 
 //array of peers in call
@@ -79,11 +79,12 @@ function handleNewPeers(data, peer, stream) {
 function dataConnectPeer(peer, otherPeer, stream) {
   var dataCon = peer.connect(otherPeer);
   dataCon.on('open', function() {
-    SpeechToText.transcribe(peer.id, dataCon);
+    speechToText.transcribe(peer.id, dataCon);
     //send peers I'm connected to; same as yours?
     dataCon.send({peers: peers});
     dataCon.on('data', function(data) {
       if (data.script) {
+        speechToText.transcriptAppend(data.script);
         alterDOM.logTranscript(data.script);
       }
       if (data.peers) {
@@ -99,12 +100,13 @@ function dataConnectPeer(peer, otherPeer, stream) {
 
  function handleIncomingData(peer, stream) {
   peer.on('connection', function(dataCon) {
-    SpeechToText.transcribe(peer.id, dataCon);
+    speechToText.transcribe(peer.id, dataCon);
     dataCon.on('open', function () {
       dataCon.send({peers: peers});
       dataCon.on('data', function(data) {
         if (data.script) {
           console.log('revieved data');
+          speechToText.transcriptAppend(data.script);
           alterDOM.logTranscript(data.script);
         }
         if (data.peers) {
