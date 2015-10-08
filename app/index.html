@@ -1,41 +1,39 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title></title>
-  <link rel="stylesheet" href="./styles/bootstrap.min.css">
-  <link rel="stylesheet" href="./styles/main.css">
-  <script src="scripts/bundle.js"></script>
-  <script src="scripts/jquery.min.js"></script>
-  <script src="scripts/bootstrap.min.js"></script>
+    <meta charset="utf-8">
+    <title></title>
+    <link rel="stylesheet" href="./styles/bootstrap.min.css">
+    <link rel="stylesheet" href="./styles/main.css">
+    <script src="scripts/jquery.min.js"></script>
+    <script src="scripts/bootstrap.min.js"></script>
 </head>
 <body>
-
-  <div id="videoContainer">
-    <div class="row controls">
-      <div class="col-lg-8">
-        <form class="navbar-form navbar-left">
-          <div class="form-group">
-            <input id="myID" type="text" class="form-control" readonly>
-            <input id="peerID" type="text" class="form-control" placeholder="Peer's ID">
-            <button id="connect" type="button" class="btn btn-primary">Call</button>
-          </div>
-          <a download id="download" href="#" class="btn btn-success pull-right">Download Transcript</a>
-        </form>
-      </div>
-      <div id="alerts" class="col-lg-4">
-        <div class="alert alert-success">
-          <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-          <strong>Welcome!</strong> Enter a peer ID or share yours to get started.
+    <div id="videoContainer">
+        <div class="row controls">
+            <div class="col-lg-8">
+                <form class="navbar-form navbar-left">
+                    <div class="form-group">
+                        <input id="myID" type="text" class="form-control" readonly>
+                        <input id="peerID" type="text" class="form-control" placeholder="Peer's ID">
+                        <button id="connect" type="button" class="btn btn-primary">Call</button>
+                    </div>
+                    <a download id="download" href="#" class="btn btn-success pull-right">Download Transcript</a>
+                </form>
+            </div>
+            <div id="alerts" class="col-lg-4">
+                <div class="alert alert-success">
+                    <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                    <strong>Welcome!</strong> Enter a peer ID or share yours to get started.
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
-
-  <div id="tools">
-    <div id="transcript"></div>
-    <div id="localMediaContainer"></div>
-  </div>
-
+    <div id="tools">
+        <div id="transcript"></div>
+        <div id="localMediaContainer"></div>
+    </div>
+    <!-- browserify bundle -->
+    <script src="scripts/bundle.js"></script>
 </body>
 </html>

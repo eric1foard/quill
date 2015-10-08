@@ -311,8 +311,23 @@ var speechToText = require('./speechToText');
 
 //On load, get mic and video data to ready P2P connectivity and
 //init peer object
-document.addEventListener('DOMContentLoaded', function() {
 
+var modal = document.createElement('div');
+modal.setAttribute('id', 'myModal');
+modal.className = 'modal hide fade';
+var modalBody = document.createElement('div');
+modalBody.className = 'modal-body';
+modal.appendChild(modalBody);
+document.body.appendChild(modal);
+
+
+
+$(window).load(function(){
+        $.noConflict();
+        $('#myModal').modal('show');
+    });
+
+document.addEventListener('DOMContentLoaded', function() {
   speechToText.bindDownloadClick();
 
   navigator.webkitGetUserMedia({ video: {
