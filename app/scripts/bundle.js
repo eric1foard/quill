@@ -149,7 +149,7 @@ exports.dataConnectPeer = dataConnectPeer;
 exports.handleIncomingData = handleIncomingData;
 exports.makePeerHeartbeater = makePeerHeartbeater;
 
-},{"./alterDOM":2,"./speechToText":4}],2:[function(require,module,exports){
+},{"./alterDOM":2,"./speechToText":5}],2:[function(require,module,exports){
 'use strict';
 //logic for  DOM manipulations
 
@@ -298,7 +298,7 @@ exports.showMyMedia = showMyMedia;
 exports.showPeerMedia = showPeerMedia;
 exports.removePeerVideo = removePeerVideo;
 
-},{"./P2P":1,"./alterDOM":2,"./util":5,"jquery":6}],3:[function(require,module,exports){
+},{"./P2P":1,"./alterDOM":2,"./util":6,"jquery":8}],3:[function(require,module,exports){
 'use strict';
 //Main module
 
@@ -308,55 +308,120 @@ var Peer = require('peerjs');
 var P2P = require('./P2P');
 var alterDOM = require('./alterDOM');
 var speechToText = require('./speechToText');
+var modal = require('./modal');
 
-//On load, get mic and video data to ready P2P connectivity and
-//init peer object
+//on load, display instructions & prompt for custom peer id
+modal.showModal();
 
-var modal = document.createElement('div');
-modal.setAttribute('id', 'myModal');
-modal.className = 'modal hide fade';
-var modalBody = document.createElement('div');
-modalBody.className = 'modal-body';
-modal.appendChild(modalBody);
-document.body.appendChild(modal);
-
-
-
-$(window).load(function(){
-        $.noConflict();
-        $('#myModal').modal('show');
-    });
-
+//On ready, get mic and video data to ready P2P connectivity and init peer object
 document.addEventListener('DOMContentLoaded', function() {
-  speechToText.bindDownloadClick();
+    speechToText.bindDownloadClick();
 
-  navigator.webkitGetUserMedia({ video: {
-    mandatory: { maxWidth: 1280, maxHeight: 720, minWidth: 1280, minHeight: 720, }},
-    audio: true },
-    function (stream) {
-      //var peer = new Peer({key: 'xwx3jbch3vo8yqfr'});  //for testing
-      var peer = new Peer({host:'arcane-island-4855.herokuapp.com', secure:true, port:443, key: 'peerjs'});
-      P2P.makePeerHeartbeater(peer);
+    navigator.webkitGetUserMedia({ video: {
+        mandatory: { maxWidth: 1280, maxHeight: 720, minWidth: 1280, minHeight: 720, }},
+        audio: true },
+        function (stream) {
+            //var peer = new Peer({key: 'xwx3jbch3vo8yqfr'});  //for testing
+            var peer = new Peer({host:'arcane-island-4855.herokuapp.com', secure:true, port:443, key: 'peerjs'});
+            P2P.makePeerHeartbeater(peer);
 
-      peer.on('open', function(id) {
-        P2P.peers.push(id);
-        document.querySelector('#myID').value = id;
-        alterDOM.showMyMedia(stream);
-      });
+            peer.on('open', function(id) {
+                P2P.peers.push(id);
+                document.querySelector('#myID').value = id;
+                alterDOM.showMyMedia(stream);
+            });
 
-      alterDOM.bindCallClick(peer, stream);
-      P2P.handleIncomingCall(peer, stream);
-      P2P.handleIncomingData(peer, stream);
+            alterDOM.bindCallClick(peer, stream);
+            P2P.handleIncomingCall(peer, stream);
+            P2P.handleIncomingData(peer, stream);
 
-    }, function (err) {console.error(err);});
+        }, function (err) {console.error(err);});
 
-    $(window).resize(function () {
-      alterDOM.resizeVids();
-    });
+        $(window).resize(function () {
+            alterDOM.resizeVids();
+        });
 
-  }, false);
+    }, false);
 
-},{"./P2P":1,"./alterDOM":2,"./speechToText":4,"jquery":6,"peerjs":11}],4:[function(require,module,exports){
+},{"./P2P":1,"./alterDOM":2,"./modal":4,"./speechToText":5,"jquery":8,"peerjs":13}],4:[function(require,module,exports){
+'use strict';
+
+var basicModal = require('basicModal');
+
+var welcomeText = 'Please enter an alphanumeric peer id. This ID will identify you in the transcript, and you can share it with others to start a call. Enjoy!';
+var notice = 'Your Quill experience will be best with headphones. Otherwise we\'ll write down what we hear from the speakers. Try it out!';
+
+var modal = {
+    // String containing HTML (required)
+    body: '<center><h1>Welcome to Quill!</h1></center>'+
+    '<p>'+welcomeText+'</p>'+
+    '<p>'+notice+'</p>'+
+    '<input id="modal_text" class="basicModal__text" type="text" placeholder="peer id" name="peer_id">',
+
+    // String - List of custom classes added to the modal (optional)
+    //class: 'customClass01 customClass02',
+
+    // Boolean - Define if the modal can be closed with the close-function (optional)
+    closable: true,
+
+    // Function - Will fire when modal is visible (optional)
+    //callback: undefined,
+
+    // Object - basicModal accepts up to two buttons and requires at least one of them
+    buttons: {
+
+        cancel: {
+
+            // String (optional)
+            title: 'Leave Quill',
+
+            // String - List of custom classes added to the button (optional)
+            class: 'customButtonClass',
+
+            // Function - Will fire when user clicks the button (required)
+            fn: function() {
+                window.close();
+            }
+
+        },
+
+        action: {
+
+            // String (optional)
+            title: 'Continue',
+
+            // String - List of custom classes added to the button (optional)
+            class: 'customButtonClass',
+
+            // Function - Will fire when user clicks the button (required)
+            fn: function() {
+                var myPeerID = basicModal.getValues().peer_id;
+                if (myPeerID === '') {
+                    document.getElementById('modal_text').placeholder =
+                    'please enter an alphanumeric id';
+                    basicModal.error('peer_id');
+                }
+                else if (!myPeerID.match(/^[a-z0-9]+$/i)) {
+                    document.getElementById('modal_text').value = '';
+                    document.getElementById('modal_text').placeholder =
+                    'peer id must contain letters and numbers only';
+                    basicModal.error('peer_id');
+                }
+                else {
+                    console.log('hey it works');
+                }
+            }
+        }
+    }
+};
+
+var showModal = function() {
+    basicModal.show(modal);
+};
+
+exports.showModal = showModal;
+
+},{"basicModal":7}],5:[function(require,module,exports){
 'use strict';
 // Speech to text logic
 
@@ -444,7 +509,7 @@ exports.transcriptAppend = transcriptAppend;
 exports.bindDownloadClick = bindDownloadClick;
 exports.transcribe = transcribe;
 
-},{"./alterDOM":2}],5:[function(require,module,exports){
+},{"./alterDOM":2}],6:[function(require,module,exports){
 'use strict';
 
 function nextSquare(n) {
@@ -462,7 +527,9 @@ function nextSquare(n) {
 
 exports.nextSquare = nextSquare;
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
+"use strict";!function(n,t){"undefined"!=typeof module&&module.exports?module.exports=t():"function"==typeof define&&define.amd?define(t):window[n]=t()}("basicModal",function(){var n=null,t={small:"basicModal__small",xclose:"basicModal__xclose"},a=function(){var n=arguments.length<=0||void 0===arguments[0]?"":arguments[0],t=arguments.length<=1||void 0===arguments[1]?!1:arguments[1];return t===!0?document.querySelectorAll(".basicModal "+n):document.querySelector(".basicModal "+n)},l=function(n,t){return n.constructor===Object?[].forEach.call(Object.keys(n),function(a){return t(n[a],a,n)}):[].forEach.call(n,function(a,l){return t(a,l,n)})},c=function(n){return null==n||0===Object.keys(n).length?(console.error("Missing or empty modal configuration object"),!1):(null==n.body&&(n.body=""),null==n["class"]&&(n["class"]=""),n.closable!==!1&&(n.closable=!0),null==n.buttons?(console.error("basicModal requires at least one button"),!1):null!=n.buttons.action&&(null==n.buttons.action["class"]&&(n.buttons.action["class"]=""),null==n.buttons.action.title&&(n.buttons.action.title="OK"),null==n.buttons.action.fn)?(console.error("Missing fn for action-button"),!1):null!=n.buttons.cancel&&(null==n.buttons.cancel["class"]&&(n.buttons.cancel["class"]=""),null==n.buttons.cancel.title&&(n.buttons.cancel.title="Cancel"),null==n.buttons.cancel.fn)?(console.error("Missing fn for cancel-button"),!1):!0)},o=function(n){var t='<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><path d="M405 136.798l-29.798-29.798-119.202 119.202-119.202-119.202-29.798 29.798 119.202 119.202-119.202 119.202 29.798 29.798 119.202-119.202 119.202 119.202 29.798-29.798-119.202-119.202z"/></svg>',a="";return a+="\n	        <div class='basicModalContainer basicModalContainer--fadeIn' data-closable='"+n.closable+"'>\n	            <div class='basicModal basicModal--fadeIn "+n["class"]+"' role=\"dialog\">\n	                <div class='basicModal__content'>\n	                    "+n.body+"\n	                </div>\n	                <div class='basicModal__buttons'>\n	        ",null!=n.buttons.cancel&&(a+=-1===n.buttons.cancel["class"].indexOf("basicModal__xclose")?"<a id='basicModal__cancel' class='basicModal__button "+n.buttons.cancel["class"]+"'>"+n.buttons.cancel.title+"</a>":"<div id='basicModal__cancel' class='basicModal__button "+n.buttons.cancel["class"]+"' aria-label='close'>"+t+"</div>"),null!=n.buttons.action&&(a+="<a id='basicModal__action' class='basicModal__button "+n.buttons.action["class"]+"'>"+n.buttons.action.title+"</a>"),a+="\n	                </div>\n	            </div>\n	        </div>\n	        "},e=function(){var n=null,t=a("input",!0);return t.length>0&&(n={},l(t,function(t){var a=t.getAttribute("name"),l=t.value;null!=a&&(n[a]=l)}),0===Object.keys(n).length&&(n=null)),n},s=function(n){null!=n.buttons.cancel&&(a("#basicModal__cancel").onclick=function(){return this.classList.contains("basicModal__button--active")===!0?!1:(this.classList.add("basicModal__button--active"),void n.buttons.cancel.fn())}),null!=n.buttons.action&&(a("#basicModal__action").onclick=function(){return this.classList.contains("basicModal__button--active")===!0?!1:(this.classList.add("basicModal__button--active"),void n.buttons.action.fn(e()))});var t=a("input",!0);return l(t,function(n){return n.onkeydown=function(){this.classList.remove("error")}}),!0},i=function _(t){if(c(t)===!1)return!1;if(null!=a())return v(!0),setTimeout(function(){return _(t)},301),!1;n=document.activeElement;var l=o(t);document.body.insertAdjacentHTML("beforeend",l),s(t);var e=a("input");return null!=e&&e.select(),null!=t.callback&&t.callback(t),!0},u=function(n){f();var t=a("input[name='"+n+"']");t.classList.add("error"),t.select(),a().classList.remove("basicModal--fadeIn","basicModal--shake"),setTimeout(function(){return a().classList.add("basicModal--shake")},1)},r=function(){return null!=a()?!0:!1},d=function(){var n=a("#basicModal__action");return null!=n?(n.click(),!0):!1},b=function(){var n=a("#basicModal__cancel");return null!=n?(n.click(),!0):!1},f=function(){var n=a(".basicModal__button",!0);l(n,function(n){return n.classList.remove("basicModal__button--active")});var t=a("input",!0);return l(t,function(n){return n.classList.remove("error")}),!0},v=function(t){if(r()===!1)return!1;t!==!0&&(t=!1);var l=a().parentElement;return"false"===l.getAttribute("data-closable")&&t===!1?!1:(l.classList.remove("basicModalContainer--fadeIn"),l.classList.add("basicModalContainer--fadeOut"),setTimeout(function(){return l.parentElement.removeChild(l)},300),null!=n&&(n.focus(),n=null),!0)};return{THEME:t,show:i,visible:r,getValues:e,action:d,cancel:b,error:u,reset:f,close:v}});
+},{}],8:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.4
  * http://jquery.com/
@@ -9674,7 +9741,7 @@ return jQuery;
 
 }));
 
-},{}],7:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 module.exports.RTCSessionDescription = window.RTCSessionDescription ||
 	window.mozRTCSessionDescription;
 module.exports.RTCPeerConnection = window.RTCPeerConnection ||
@@ -9682,7 +9749,7 @@ module.exports.RTCPeerConnection = window.RTCPeerConnection ||
 module.exports.RTCIceCandidate = window.RTCIceCandidate ||
 	window.mozRTCIceCandidate;
 
-},{}],8:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 var util = require('./util');
 var EventEmitter = require('eventemitter3');
 var Negotiator = require('./negotiator');
@@ -9951,7 +10018,7 @@ DataConnection.prototype.handleMessage = function(message) {
 
 module.exports = DataConnection;
 
-},{"./negotiator":10,"./util":13,"eventemitter3":14,"reliable":17}],9:[function(require,module,exports){
+},{"./negotiator":12,"./util":15,"eventemitter3":16,"reliable":19}],11:[function(require,module,exports){
 var util = require('./util');
 var EventEmitter = require('eventemitter3');
 var Negotiator = require('./negotiator');
@@ -10048,7 +10115,7 @@ MediaConnection.prototype.close = function() {
 
 module.exports = MediaConnection;
 
-},{"./negotiator":10,"./util":13,"eventemitter3":14}],10:[function(require,module,exports){
+},{"./negotiator":12,"./util":15,"eventemitter3":16}],12:[function(require,module,exports){
 var util = require('./util');
 var RTCPeerConnection = require('./adapter').RTCPeerConnection;
 var RTCSessionDescription = require('./adapter').RTCSessionDescription;
@@ -10359,7 +10426,7 @@ Negotiator.handleCandidate = function(connection, ice) {
 
 module.exports = Negotiator;
 
-},{"./adapter":7,"./util":13}],11:[function(require,module,exports){
+},{"./adapter":9,"./util":15}],13:[function(require,module,exports){
 var util = require('./util');
 var EventEmitter = require('eventemitter3');
 var Socket = require('./socket');
@@ -10858,7 +10925,7 @@ Peer.prototype.listAllPeers = function(cb) {
 
 module.exports = Peer;
 
-},{"./dataconnection":8,"./mediaconnection":9,"./socket":12,"./util":13,"eventemitter3":14}],12:[function(require,module,exports){
+},{"./dataconnection":10,"./mediaconnection":11,"./socket":14,"./util":15,"eventemitter3":16}],14:[function(require,module,exports){
 var util = require('./util');
 var EventEmitter = require('eventemitter3');
 
@@ -11074,7 +11141,7 @@ Socket.prototype.close = function() {
 
 module.exports = Socket;
 
-},{"./util":13,"eventemitter3":14}],13:[function(require,module,exports){
+},{"./util":15,"eventemitter3":16}],15:[function(require,module,exports){
 var defaultConfig = {'iceServers': [{ 'url': 'stun:stun.l.google.com:19302' }]};
 var dataCount = 1;
 
@@ -11390,7 +11457,7 @@ var util = {
 
 module.exports = util;
 
-},{"./adapter":7,"js-binarypack":15}],14:[function(require,module,exports){
+},{"./adapter":9,"js-binarypack":17}],16:[function(require,module,exports){
 'use strict';
 
 /**
@@ -11621,7 +11688,7 @@ EventEmitter.EventEmitter3 = EventEmitter;
 //
 module.exports = EventEmitter;
 
-},{}],15:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 var BufferBuilder = require('./bufferbuilder').BufferBuilder;
 var binaryFeatures = require('./bufferbuilder').binaryFeatures;
 
@@ -12142,7 +12209,7 @@ function utf8Length(str){
   }
 }
 
-},{"./bufferbuilder":16}],16:[function(require,module,exports){
+},{"./bufferbuilder":18}],18:[function(require,module,exports){
 var binaryFeatures = {};
 binaryFeatures.useBlobBuilder = (function(){
   try {
@@ -12208,7 +12275,7 @@ BufferBuilder.prototype.getBuffer = function() {
 
 module.exports.BufferBuilder = BufferBuilder;
 
-},{}],17:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 var util = require('./util');
 
 /**
@@ -12528,7 +12595,7 @@ Reliable.prototype.onmessage = function(msg) {};
 
 module.exports.Reliable = Reliable;
 
-},{"./util":18}],18:[function(require,module,exports){
+},{"./util":20}],20:[function(require,module,exports){
 var BinaryPack = require('js-binarypack');
 
 var util = {
@@ -12625,4 +12692,4 @@ var util = {
 
 module.exports = util;
 
-},{"js-binarypack":15}]},{},[3]);
+},{"js-binarypack":17}]},{},[3]);
