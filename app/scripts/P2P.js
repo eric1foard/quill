@@ -2,6 +2,7 @@
 //Peer to Peer connection logic
 
 //REQUIRED MODULES
+var Peer = require('peerjs');
 var speechToText = require('./speechToText');
 var alterDOM = require('./alterDOM');
 
@@ -141,6 +142,22 @@ function makePeerHeartbeater(peer) {
   };
 }
 
+function initPeer(peerID, stream) {
+    //var peer = new Peer({key: 'xwx3jbch3vo8yqfr'});  //for testing
+    var peer = new Peer(peerID, {host:'arcane-island-4855.herokuapp.com', secure:true, port:443, key: 'peerjs'});
+    makePeerHeartbeater(peer);
+
+    peer.on('open', function(id) {
+        peers.push(id);
+        document.querySelector('#myID').value = id;
+    });
+
+    alterDOM.bindCallClick(peer, stream);
+    handleIncomingCall(peer, stream);
+    handleIncomingData(peer, stream);
+}
+
+exports.initPeer = initPeer;
 exports.peers = peers;
 exports.callPeer = callPeer;
 exports.handleIncomingCall = handleIncomingCall;

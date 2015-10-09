@@ -3,6 +3,7 @@
 //Peer to Peer connection logic
 
 //REQUIRED MODULES
+var Peer = require('peerjs');
 var speechToText = require('./speechToText');
 var alterDOM = require('./alterDOM');
 
@@ -142,6 +143,22 @@ function makePeerHeartbeater(peer) {
   };
 }
 
+function initPeer(peerID, stream) {
+    //var peer = new Peer({key: 'xwx3jbch3vo8yqfr'});  //for testing
+    var peer = new Peer(peerID, {host:'arcane-island-4855.herokuapp.com', secure:true, port:443, key: 'peerjs'});
+    makePeerHeartbeater(peer);
+
+    peer.on('open', function(id) {
+        peers.push(id);
+        document.querySelector('#myID').value = id;
+    });
+
+    alterDOM.bindCallClick(peer, stream);
+    handleIncomingCall(peer, stream);
+    handleIncomingData(peer, stream);
+}
+
+exports.initPeer = initPeer;
 exports.peers = peers;
 exports.callPeer = callPeer;
 exports.handleIncomingCall = handleIncomingCall;
@@ -149,7 +166,7 @@ exports.dataConnectPeer = dataConnectPeer;
 exports.handleIncomingData = handleIncomingData;
 exports.makePeerHeartbeater = makePeerHeartbeater;
 
-},{"./alterDOM":2,"./speechToText":5}],2:[function(require,module,exports){
+},{"./alterDOM":2,"./speechToText":5,"peerjs":13}],2:[function(require,module,exports){
 'use strict';
 //logic for  DOM manipulations
 
@@ -161,133 +178,142 @@ var alterDOM = require('./alterDOM');
 
 
 function bindCallClick(peer, stream) {
-  var button = document.querySelector('#connect');
+    var button = document.querySelector('#connect');
 
-  button.addEventListener('click', function () {
-    var otherPeer = document.querySelector('#peerID').value;
+    button.addEventListener('click', function () {
+        var otherPeer = document.querySelector('#peerID').value;
 
-    if (otherPeer.length<=0) {
-      //TODO: display something to user
-      alterDOM.makeAlert('please enter a peer ID!');
+        if (otherPeer.length<=0) {
+            //TODO: display something to user
+            alterDOM.makeAlert('please enter a peer ID!');
+        }
+
+        else {
+            document.querySelector('#peerID').value = '';
+            P2P.callPeer(peer, otherPeer, stream);
+            P2P.dataConnectPeer(peer, otherPeer, stream);
+        }
+    });
+}
+
+function resizePeerVids() {
+    var numVids = $('.peerVideo').length;
+    var parentWidth = $('#videoContainer').width();
+    if (numVids>1) {
+        var numVidsWide = Math.sqrt(util.nextSquare(numVids));
+        $('.peerVideo').width((parentWidth/numVidsWide)-10);
     }
-
     else {
-      document.querySelector('#peerID').value = '';
-      P2P.callPeer(peer, otherPeer, stream);
-      P2P.dataConnectPeer(peer, otherPeer, stream);
+        $('.peerVideo').width(parentWidth);
     }
-  });
+}
+
+function resizeLocalMedia() {
+    $('localMedia').width($('#localMediaContainer').width());
 }
 
 function resizeVids() {
-  var numVids = $('.peerVideo').length;
-  var parentWidth = $('#videoContainer').width();
-  if (numVids>1) {
-    var numVidsWide = Math.sqrt(util.nextSquare(numVids));
-    $('.peerVideo').width((parentWidth/numVidsWide)-10);
-  }
-  else {
-    $('.peerVideo').width(parentWidth);
-  }
+    resizePeerVids();
+    resizeLocalMedia();
 }
 
 function logTranscript(message) {
-  console.log('from logTranscript');
-  var entry = document.createElement('div');
-  entry.className = 'message';
+    console.log('from logTranscript');
+    var entry = document.createElement('div');
+    entry.className = 'message';
 
-  var mes = document.createTextNode(message);
-  entry.appendChild(mes);
-  document.querySelector('#transcript').appendChild(entry);
+    var mes = document.createTextNode(message);
+    entry.appendChild(mes);
+    document.querySelector('#transcript').appendChild(entry);
 }
 
 function showMyMedia(stream) {
-  var video = document.createElement('video');
-  video.setAttribute('id', 'localMedia');
-  video.src = window.URL.createObjectURL(stream);
-  //prevent audio feedback
-  video.muted = true;
-  var parentWidth = $('#localMediaContainer').width();
-  $('#localMediaContainer').append(video);
-  $('#localMedia').width(parentWidth);
-  video.play();
+    var video = document.createElement('video');
+    video.setAttribute('id', 'localMedia');
+    video.src = window.URL.createObjectURL(stream);
+    //prevent audio feedback
+    video.muted = true;
+    var parentWidth = $('#localMediaContainer').width();
+    $('#localMediaContainer').append(video);
+    $('#localMedia').width(parentWidth);
+    video.play();
 }
 
 function bindHangUp(call, otherPeer) {
-  var button = document.createElement('button');
-  button.className = 'hangup btn btn-danger';
+    var button = document.createElement('button');
+    button.className = 'hangup btn btn-danger';
 
-  var pos = $('#'+otherPeer).position();
-  button.style.top = pos.top;
-  button.style.left = pos.left;
+    var pos = $('#'+otherPeer).position();
+    button.style.top = pos.top;
+    button.style.left = pos.left;
 
-  button.appendChild(document.createTextNode('hang up'));
+    button.appendChild(document.createTextNode('hang up'));
 
-  button.addEventListener('click', function() {
-    call.close();
-    P2P.peers = P2P.peers.filter(function (p) {
-      return p!==otherPeer;
+    button.addEventListener('click', function() {
+        call.close();
+        P2P.peers = P2P.peers.filter(function (p) {
+            return p!==otherPeer;
+        });
     });
-  });
 
-  return button;
+    return button;
 }
 
 function showPeerMedia(stream, call, otherPeer) {
-  try {
+    try {
 
-    //container for video and hangup button
-    var div = document.createElement('div');
-    div.setAttribute('class', 'peerVideoCont');
-    div.setAttribute('id', 'cont'+otherPeer);
+        //container for video and hangup button
+        var div = document.createElement('div');
+        div.setAttribute('class', 'peerVideoCont');
+        div.setAttribute('id', 'cont'+otherPeer);
 
-    var video = document.createElement('video');
-    video.src = window.URL.createObjectURL(stream);
-    video.setAttribute('class', 'peerVideo');
-    video.setAttribute('id', otherPeer);
+        var video = document.createElement('video');
+        video.src = window.URL.createObjectURL(stream);
+        video.setAttribute('class', 'peerVideo');
+        video.setAttribute('id', otherPeer);
 
-    var videoContainer = document.querySelector('#videoContainer');
-    div.appendChild(video);
-    videoContainer.appendChild(div);
+        var videoContainer = document.querySelector('#videoContainer');
+        div.appendChild(video);
+        videoContainer.appendChild(div);
 
-    resizeVids();
-    video.play();
+        resizeVids();
+        video.play();
 
-    //need position of video, so append after resizeVids
-    var button = bindHangUp(call, otherPeer);
-    div.appendChild(button);
-  }
-  catch(error) {
-    alterDOM.makeAlert('there was a problem displaying ',otherPeer,'\'s video.');
-    console.log('there was a problem displaying ',otherPeer,'\'s video. ',error);
-  }
+        //need position of video, so append after resizeVids
+        var button = bindHangUp(call, otherPeer);
+        div.appendChild(button);
+    }
+    catch(error) {
+        alterDOM.makeAlert('there was a problem displaying ',otherPeer,'\'s video.');
+        console.log('there was a problem displaying ',otherPeer,'\'s video. ',error);
+    }
 }
 
 function removePeerVideo(otherPeer) {
-  var videoContainer = document.querySelector('#videoContainer');
-  videoContainer.removeChild(document.getElementById('cont'+otherPeer));
-  resizeVids();
+    var videoContainer = document.querySelector('#videoContainer');
+    videoContainer.removeChild(document.getElementById('cont'+otherPeer));
+    resizeVids();
 }
 
 function makeAlert(message) {
-  var alerts = document.querySelector('#alerts');
-  var alert = document.createElement('div');
-  alert.className = 'alert alert-danger';
+    var alerts = document.querySelector('#alerts');
+    var alert = document.createElement('div');
+    alert.className = 'alert alert-danger';
 
-  var close = document.createElement('a');
-  close.setAttribute('href', '#');
-  close.className = 'close';
-  close.setAttribute('data-dismiss','alert');
-  close.setAttribute('aria-label','close');
+    var close = document.createElement('a');
+    close.setAttribute('href', '#');
+    close.className = 'close';
+    close.setAttribute('data-dismiss','alert');
+    close.setAttribute('aria-label','close');
 
-  var x = document.createTextNode('x');
-  close.appendChild(x);
+    var x = document.createTextNode('x');
+    close.appendChild(x);
 
-  var msg = document.createTextNode(message);
+    var msg = document.createTextNode(message);
 
-  alert.appendChild(msg);
-  alert.appendChild(close);
-  alerts.appendChild(alert);
+    alert.appendChild(msg);
+    alert.appendChild(close);
+    alerts.appendChild(alert);
 }
 
 exports.makeAlert = makeAlert;
@@ -304,36 +330,30 @@ exports.removePeerVideo = removePeerVideo;
 
 //REQUIRED MODULES
 var $ = require('jquery');
-var Peer = require('peerjs');
 var P2P = require('./P2P');
 var alterDOM = require('./alterDOM');
 var speechToText = require('./speechToText');
 var modal = require('./modal');
 
 //on load, display instructions & prompt for custom peer id
-modal.showModal();
+var emitter = modal.showModal();
 
 //On ready, get mic and video data to ready P2P connectivity and init peer object
 document.addEventListener('DOMContentLoaded', function() {
+
     speechToText.bindDownloadClick();
 
     navigator.webkitGetUserMedia({ video: {
         mandatory: { maxWidth: 1280, maxHeight: 720, minWidth: 1280, minHeight: 720, }},
         audio: true },
         function (stream) {
-            //var peer = new Peer({key: 'xwx3jbch3vo8yqfr'});  //for testing
-            var peer = new Peer({host:'arcane-island-4855.herokuapp.com', secure:true, port:443, key: 'peerjs'});
-            P2P.makePeerHeartbeater(peer);
 
-            peer.on('open', function(id) {
-                P2P.peers.push(id);
-                document.querySelector('#myID').value = id;
-                alterDOM.showMyMedia(stream);
+            alterDOM.showMyMedia(stream);
+
+            emitter.on('peerid', function (myPeerId) {
+                console.log('peerID event recieved ',myPeerId);
+                P2P.initPeer(myPeerId, stream);
             });
-
-            alterDOM.bindCallClick(peer, stream);
-            P2P.handleIncomingCall(peer, stream);
-            P2P.handleIncomingData(peer, stream);
 
         }, function (err) {console.error(err);});
 
@@ -343,85 +363,93 @@ document.addEventListener('DOMContentLoaded', function() {
 
     }, false);
 
-},{"./P2P":1,"./alterDOM":2,"./modal":4,"./speechToText":5,"jquery":8,"peerjs":13}],4:[function(require,module,exports){
+},{"./P2P":1,"./alterDOM":2,"./modal":4,"./speechToText":5,"jquery":8}],4:[function(require,module,exports){
 'use strict';
 
+var EventEmitter = require('events').EventEmitter;
 var basicModal = require('basicModal');
 
 var welcomeText = 'Please enter an alphanumeric peer id. This ID will identify you in the transcript, and you can share it with others to start a call. Enjoy!';
 var notice = 'Your Quill experience will be best with headphones. Otherwise we\'ll write down what we hear from the speakers. Try it out!';
 
-var modal = {
-    // String containing HTML (required)
-    body: '<center><h1>Welcome to Quill!</h1></center>'+
-    '<p>'+welcomeText+'</p>'+
-    '<p>'+notice+'</p>'+
-    '<input id="modal_text" class="basicModal__text" type="text" placeholder="peer id" name="peer_id">',
+var showModal = function() {
 
-    // String - List of custom classes added to the modal (optional)
-    //class: 'customClass01 customClass02',
+    var emitter = new EventEmitter();
 
-    // Boolean - Define if the modal can be closed with the close-function (optional)
-    closable: true,
+    basicModal.show({
+        // String containing HTML (required)
+        body: '<center><h1>Welcome to Quill!</h1></center>'+
+        '<p>'+welcomeText+'</p>'+
+        '<p>'+notice+'</p>'+
+        '<input id="modal_text" class="basicModal__text" type="text" placeholder="peer id" name="peer_id">',
 
-    // Function - Will fire when modal is visible (optional)
-    //callback: undefined,
+        // String - List of custom classes added to the modal (optional)
+        //class: 'customClass01 customClass02',
 
-    // Object - basicModal accepts up to two buttons and requires at least one of them
-    buttons: {
+        // Boolean - Define if the modal can be closed with the close-function (optional)
+        closable: true,
 
-        cancel: {
+        // Function - Will fire when modal is visible (optional)
+        //callback: undefined,
 
-            // String (optional)
-            title: 'Leave Quill',
+        // Object - basicModal accepts up to two buttons and requires at least one of them
+        buttons: {
 
-            // String - List of custom classes added to the button (optional)
-            class: 'customButtonClass',
+            cancel: {
 
-            // Function - Will fire when user clicks the button (required)
-            fn: function() {
-                window.close();
-            }
+                // String (optional)
+                title: 'Leave Quill',
 
-        },
+                // String - List of custom classes added to the button (optional)
+                class: 'customButtonClass',
 
-        action: {
-
-            // String (optional)
-            title: 'Continue',
-
-            // String - List of custom classes added to the button (optional)
-            class: 'customButtonClass',
-
-            // Function - Will fire when user clicks the button (required)
-            fn: function() {
-                var myPeerID = basicModal.getValues().peer_id;
-                if (myPeerID === '') {
-                    document.getElementById('modal_text').placeholder =
-                    'please enter an alphanumeric id';
-                    basicModal.error('peer_id');
+                // Function - Will fire when user clicks the button (required)
+                fn: function() {
+                    window.close();
                 }
-                else if (!myPeerID.match(/^[a-z0-9]+$/i)) {
-                    document.getElementById('modal_text').value = '';
-                    document.getElementById('modal_text').placeholder =
-                    'peer id must contain letters and numbers only';
-                    basicModal.error('peer_id');
-                }
-                else {
-                    console.log('hey it works');
+
+            },
+
+            action: {
+
+                // String (optional)
+                title: 'Continue',
+
+                // String - List of custom classes added to the button (optional)
+                class: 'customButtonClass',
+
+                // Function - Will fire when user clicks the button (required)
+                fn: function() {
+                    var myPeerID = basicModal.getValues().peer_id;
+                    if (myPeerID === '') {
+                        document.getElementById('modal_text').placeholder =
+                        'please enter an alphanumeric id';
+                        basicModal.error('peer_id');
+                    }
+                    else if (!myPeerID.match(/^[a-z0-9]+$/i)) {
+                        document.getElementById('modal_text').value = '';
+                        document.getElementById('modal_text').placeholder =
+                        'peer id must contain letters and numbers only';
+                        basicModal.error('peer_id');
+                    }
+                    else {
+                        //valid peerid ready to be sent to signaling server
+                        emitter.emit('peerid', myPeerID);
+                        basicModal.close();
+                        console.log('peerid event emitted ',myPeerID);
+                    }
                 }
             }
         }
-    }
-};
+    });
 
-var showModal = function() {
-    basicModal.show(modal);
+    return emitter;
+
 };
 
 exports.showModal = showModal;
 
-},{"basicModal":7}],5:[function(require,module,exports){
+},{"basicModal":7,"events":21}],5:[function(require,module,exports){
 'use strict';
 // Speech to text logic
 
@@ -12692,4 +12720,307 @@ var util = {
 
 module.exports = util;
 
-},{"js-binarypack":17}]},{},[3]);
+},{"js-binarypack":17}],21:[function(require,module,exports){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+function EventEmitter() {
+  this._events = this._events || {};
+  this._maxListeners = this._maxListeners || undefined;
+}
+module.exports = EventEmitter;
+
+// Backwards-compat with node 0.10.x
+EventEmitter.EventEmitter = EventEmitter;
+
+EventEmitter.prototype._events = undefined;
+EventEmitter.prototype._maxListeners = undefined;
+
+// By default EventEmitters will print a warning if more than 10 listeners are
+// added to it. This is a useful default which helps finding memory leaks.
+EventEmitter.defaultMaxListeners = 10;
+
+// Obviously not all Emitters should be limited to 10. This function allows
+// that to be increased. Set to zero for unlimited.
+EventEmitter.prototype.setMaxListeners = function(n) {
+  if (!isNumber(n) || n < 0 || isNaN(n))
+    throw TypeError('n must be a positive number');
+  this._maxListeners = n;
+  return this;
+};
+
+EventEmitter.prototype.emit = function(type) {
+  var er, handler, len, args, i, listeners;
+
+  if (!this._events)
+    this._events = {};
+
+  // If there is no 'error' event listener then throw.
+  if (type === 'error') {
+    if (!this._events.error ||
+        (isObject(this._events.error) && !this._events.error.length)) {
+      er = arguments[1];
+      if (er instanceof Error) {
+        throw er; // Unhandled 'error' event
+      }
+      throw TypeError('Uncaught, unspecified "error" event.');
+    }
+  }
+
+  handler = this._events[type];
+
+  if (isUndefined(handler))
+    return false;
+
+  if (isFunction(handler)) {
+    switch (arguments.length) {
+      // fast cases
+      case 1:
+        handler.call(this);
+        break;
+      case 2:
+        handler.call(this, arguments[1]);
+        break;
+      case 3:
+        handler.call(this, arguments[1], arguments[2]);
+        break;
+      // slower
+      default:
+        len = arguments.length;
+        args = new Array(len - 1);
+        for (i = 1; i < len; i++)
+          args[i - 1] = arguments[i];
+        handler.apply(this, args);
+    }
+  } else if (isObject(handler)) {
+    len = arguments.length;
+    args = new Array(len - 1);
+    for (i = 1; i < len; i++)
+      args[i - 1] = arguments[i];
+
+    listeners = handler.slice();
+    len = listeners.length;
+    for (i = 0; i < len; i++)
+      listeners[i].apply(this, args);
+  }
+
+  return true;
+};
+
+EventEmitter.prototype.addListener = function(type, listener) {
+  var m;
+
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  if (!this._events)
+    this._events = {};
+
+  // To avoid recursion in the case that type === "newListener"! Before
+  // adding it to the listeners, first emit "newListener".
+  if (this._events.newListener)
+    this.emit('newListener', type,
+              isFunction(listener.listener) ?
+              listener.listener : listener);
+
+  if (!this._events[type])
+    // Optimize the case of one listener. Don't need the extra array object.
+    this._events[type] = listener;
+  else if (isObject(this._events[type]))
+    // If we've already got an array, just append.
+    this._events[type].push(listener);
+  else
+    // Adding the second element, need to change to array.
+    this._events[type] = [this._events[type], listener];
+
+  // Check for listener leak
+  if (isObject(this._events[type]) && !this._events[type].warned) {
+    var m;
+    if (!isUndefined(this._maxListeners)) {
+      m = this._maxListeners;
+    } else {
+      m = EventEmitter.defaultMaxListeners;
+    }
+
+    if (m && m > 0 && this._events[type].length > m) {
+      this._events[type].warned = true;
+      console.error('(node) warning: possible EventEmitter memory ' +
+                    'leak detected. %d listeners added. ' +
+                    'Use emitter.setMaxListeners() to increase limit.',
+                    this._events[type].length);
+      if (typeof console.trace === 'function') {
+        // not supported in IE 10
+        console.trace();
+      }
+    }
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+EventEmitter.prototype.once = function(type, listener) {
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  var fired = false;
+
+  function g() {
+    this.removeListener(type, g);
+
+    if (!fired) {
+      fired = true;
+      listener.apply(this, arguments);
+    }
+  }
+
+  g.listener = listener;
+  this.on(type, g);
+
+  return this;
+};
+
+// emits a 'removeListener' event iff the listener was removed
+EventEmitter.prototype.removeListener = function(type, listener) {
+  var list, position, length, i;
+
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  if (!this._events || !this._events[type])
+    return this;
+
+  list = this._events[type];
+  length = list.length;
+  position = -1;
+
+  if (list === listener ||
+      (isFunction(list.listener) && list.listener === listener)) {
+    delete this._events[type];
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+
+  } else if (isObject(list)) {
+    for (i = length; i-- > 0;) {
+      if (list[i] === listener ||
+          (list[i].listener && list[i].listener === listener)) {
+        position = i;
+        break;
+      }
+    }
+
+    if (position < 0)
+      return this;
+
+    if (list.length === 1) {
+      list.length = 0;
+      delete this._events[type];
+    } else {
+      list.splice(position, 1);
+    }
+
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.removeAllListeners = function(type) {
+  var key, listeners;
+
+  if (!this._events)
+    return this;
+
+  // not listening for removeListener, no need to emit
+  if (!this._events.removeListener) {
+    if (arguments.length === 0)
+      this._events = {};
+    else if (this._events[type])
+      delete this._events[type];
+    return this;
+  }
+
+  // emit removeListener for all listeners on all events
+  if (arguments.length === 0) {
+    for (key in this._events) {
+      if (key === 'removeListener') continue;
+      this.removeAllListeners(key);
+    }
+    this.removeAllListeners('removeListener');
+    this._events = {};
+    return this;
+  }
+
+  listeners = this._events[type];
+
+  if (isFunction(listeners)) {
+    this.removeListener(type, listeners);
+  } else {
+    // LIFO order
+    while (listeners.length)
+      this.removeListener(type, listeners[listeners.length - 1]);
+  }
+  delete this._events[type];
+
+  return this;
+};
+
+EventEmitter.prototype.listeners = function(type) {
+  var ret;
+  if (!this._events || !this._events[type])
+    ret = [];
+  else if (isFunction(this._events[type]))
+    ret = [this._events[type]];
+  else
+    ret = this._events[type].slice();
+  return ret;
+};
+
+EventEmitter.listenerCount = function(emitter, type) {
+  var ret;
+  if (!emitter._events || !emitter._events[type])
+    ret = 0;
+  else if (isFunction(emitter._events[type]))
+    ret = 1;
+  else
+    ret = emitter._events[type].length;
+  return ret;
+};
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+
+},{}]},{},[3]);

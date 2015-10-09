@@ -68,7 +68,7 @@ input {
 }
 
 #localMediaContainer {
-  background-color: black;
+  background-color: #21252B;
   /*anchor localMedia to bottom of screen*/
   position: fixed;
   bottom: 0;
