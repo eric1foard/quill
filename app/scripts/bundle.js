@@ -11,6 +11,14 @@ var modal = require('./modal');
 //array of peers in call
 var peers = [];
 
+function getPeers() {
+    return peers;
+}
+
+function setPeers(newPeers) {
+    peers = newPeers;
+}
+
 function callPeer(peer, otherPeer, stream) {
   if (peers.indexOf(otherPeer)>=0) {
     alterDOM.makeAlert('you are already connected with this peer!');
@@ -172,6 +180,8 @@ function initPeer(peerID, stream, emitter) {
 }
 
 exports.initPeer = initPeer;
+exports.getPeers = getPeers;
+exports.setPeers = setPeers;
 exports.peers = peers;
 exports.callPeer = callPeer;
 exports.handleIncomingCall = handleIncomingCall;
@@ -197,6 +207,7 @@ function bindCallClick(peer, stream) {
         var otherPeer = document.querySelector('#peerID').value;
 
         if (otherPeer.length<=0) {
+            //TODO: display something to user
             alterDOM.makeAlert('please enter a peer ID!');
         }
 
@@ -263,9 +274,12 @@ function bindHangUp(call, otherPeer) {
 
     button.addEventListener('click', function() {
         call.close();
-        P2P.peers = P2P.peers.filter(function (p) {
+
+        var newPeers = P2P.getPeers().filter(function (p) {
             return p!==otherPeer;
         });
+
+        P2P.setPeers(newPeers);
     });
 
     return button;
@@ -476,7 +490,7 @@ var showModal = function(error, emitter) {
             }
         }
     });
-
+    
     return emitter;
 
 };

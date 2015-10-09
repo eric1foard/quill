@@ -15,6 +15,7 @@ function bindCallClick(peer, stream) {
         var otherPeer = document.querySelector('#peerID').value;
 
         if (otherPeer.length<=0) {
+            //TODO: display something to user
             alterDOM.makeAlert('please enter a peer ID!');
         }
 
@@ -81,9 +82,12 @@ function bindHangUp(call, otherPeer) {
 
     button.addEventListener('click', function() {
         call.close();
-        P2P.peers = P2P.peers.filter(function (p) {
+
+        var newPeers = P2P.getPeers().filter(function (p) {
             return p!==otherPeer;
         });
+
+        P2P.setPeers(newPeers);
     });
 
     return button;

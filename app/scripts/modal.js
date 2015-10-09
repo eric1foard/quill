@@ -98,7 +98,7 @@ var showModal = function(error, emitter) {
             }
         }
     });
-
+    
     return emitter;
 
 };
