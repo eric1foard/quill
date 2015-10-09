@@ -400,8 +400,8 @@ function setModalHTML(error) {
 
     else {
         return '<center><h1>Welcome to Quill!</h1></center>'+
-        '<p>Please enter an alphanumeric peer id. This ID will identify you in the transcript, and you can share it with others to start a call. Enjoy!</p>'+
-        '<p>Your Quill experience will be best with headphones. Otherwise we\'ll write down what we hear from the speakers. Try it out!</p>';
+        '<p>Please enter an alphanumeric peer id. You can share it with others to start a call. Enjoy!</p>'+
+        '<b><p>The transcript will be most accurate if you use headphones. Try it out!</p></b>';
     }
 }
 

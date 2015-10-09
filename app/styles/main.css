@@ -10,6 +10,10 @@ body {
   display: flex;
 }
 
+video {
+    background-color: #21252B;
+}
+
 #videoContainer {
   background-color: #282C34;
   flex: 3;
