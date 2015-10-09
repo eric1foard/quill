@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             emitter.on('peerid', function (myPeerId) {
                 console.log('peerID event recieved ',myPeerId);
-                P2P.initPeer(myPeerId, stream);
+                P2P.initPeer(myPeerId, stream, emitter);
             });
 
         }, function (err) {console.error(err);});

@@ -3,18 +3,40 @@
 var EventEmitter = require('events').EventEmitter;
 var basicModal = require('basicModal');
 
-var welcomeText = 'Please enter an alphanumeric peer id. This ID will identify you in the transcript, and you can share it with others to start a call. Enjoy!';
-var notice = 'Your Quill experience will be best with headphones. Otherwise we\'ll write down what we hear from the speakers. Try it out!';
 
-var showModal = function() {
+function setModalHTML(error) {
 
-    var emitter = new EventEmitter();
+    if (error) {
+
+        if (error.type === 'unavailable-id') {
+            return'<center><h3>the ID you\'ve chosen is in use!</h3></center>'+
+            '<p>Try another alphanumeric ID.</p>';
+        }
+
+        if (error.type === 'invalid-id') {
+            return '<center><h3>You\'ve chosen an invalid ID</h3></center>'+
+            '<p>You probably used a character other than a letter or number. Try another alphanumeric ID!</p>';
+        }
+    }
+
+    else {
+        return '<center><h1>Welcome to Quill!</h1></center>'+
+        '<p>Please enter an alphanumeric peer id. This ID will identify you in the transcript, and you can share it with others to start a call. Enjoy!</p>'+
+        '<p>Your Quill experience will be best with headphones. Otherwise we\'ll write down what we hear from the speakers. Try it out!</p>';
+    }
+}
+
+var showModal = function(error, emitter) {
+
+    if (!emitter) {
+        emitter = new EventEmitter();
+    }
+
+    var bodyHTML = setModalHTML(error);
 
     basicModal.show({
         // String containing HTML (required)
-        body: '<center><h1>Welcome to Quill!</h1></center>'+
-        '<p>'+welcomeText+'</p>'+
-        '<p>'+notice+'</p>'+
+        body: bodyHTML+
         '<input id="modal_text" class="basicModal__text" type="text" placeholder="peer id" name="peer_id">',
 
         // String - List of custom classes added to the modal (optional)

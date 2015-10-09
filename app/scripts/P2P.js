@@ -5,6 +5,7 @@
 var Peer = require('peerjs');
 var speechToText = require('./speechToText');
 var alterDOM = require('./alterDOM');
+var modal = require('./modal');
 
 //array of peers in call
 var peers = [];
@@ -142,7 +143,7 @@ function makePeerHeartbeater(peer) {
   };
 }
 
-function initPeer(peerID, stream) {
+function initPeer(peerID, stream, emitter) {
     //var peer = new Peer({key: 'xwx3jbch3vo8yqfr'});  //for testing
     var peer = new Peer(peerID, {host:'arcane-island-4855.herokuapp.com', secure:true, port:443, key: 'peerjs'});
     makePeerHeartbeater(peer);
@@ -150,6 +151,18 @@ function initPeer(peerID, stream) {
     peer.on('open', function(id) {
         peers.push(id);
         document.querySelector('#myID').value = id;
+    });
+
+    peer.on('error', function (error) {
+        console.log('ERROR '+ error);
+        if (error.type === 'peer-unavailable') {
+            alterDOM.makeAlert('peer unavailable. Do you have the correct ID?');
+        }
+
+        if (error.type === 'unavailable-id' || error.type === 'invalid-id') {
+            peer.destroy();
+            modal.showModal(error, emitter);
+        }
     });
 
     alterDOM.bindCallClick(peer, stream);
