@@ -14,15 +14,14 @@ video {
     background-color: #21252B;
 }
 
+.alert {
+  display:inline-block;
+}
+
 #videoContainer {
   background-color: #282C34;
   flex: 3;
   position: relative;
-}
-
-.alert {
-  height: 38px;
-  line-height: 10px;
 }
 
 #controls {

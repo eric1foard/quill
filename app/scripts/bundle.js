@@ -197,7 +197,6 @@ function bindCallClick(peer, stream) {
         var otherPeer = document.querySelector('#peerID').value;
 
         if (otherPeer.length<=0) {
-            //TODO: display something to user
             alterDOM.makeAlert('please enter a peer ID!');
         }
 
