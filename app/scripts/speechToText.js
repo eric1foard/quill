@@ -12,7 +12,7 @@ function transcriptAppend(message) {
     text += message + '\n';
 }
 
-function transcribe(peerID, dataCon) {
+function transcribe(peerName, dataCon) {
 
     if (window.SpeechRecognition === null) {
         alterDOM.makeAlert('could not locate speech recognizer');
@@ -29,7 +29,7 @@ function transcribe(peerID, dataCon) {
                 var transcript = '';
                 for (var i = event.resultIndex; i < event.results.length; i++) {
                     if (i === 0) {
-                        transcript = peerID+': '+event.results[i][0].transcript;
+                        transcript = peerName+': '+event.results[i][0].transcript;
                     }
                     else {
                         transcript += event.results[i][0].transcript;
@@ -41,7 +41,6 @@ function transcribe(peerID, dataCon) {
             };
 
             speechRecog.onend = function() {
-                console.log('restarted speechRecog!');
                 if (dataCon.open) {
                     speechRecog.start();
                 }

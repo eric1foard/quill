@@ -2,42 +2,29 @@
 
 var EventEmitter = require('events').EventEmitter;
 var basicModal = require('basicModal');
+var $ = require('jquery');
 
-
-function setModalHTML(error) {
-
-    if (error) {
-
-        if (error.type === 'unavailable-id') {
-            return'<center><h3>the ID you\'ve chosen is in use!</h3></center>'+
-            '<p>Try another alphanumeric ID.</p>';
-        }
-
-        if (error.type === 'invalid-id') {
-            return '<center><h3>You\'ve chosen an invalid ID</h3></center>'+
-            '<p>You probably used a character other than a letter or number. Try another alphanumeric ID!</p>';
-        }
-    }
-
-    else {
-        return '<center><h1>Welcome to Quill!</h1></center>'+
-        '<p>Please enter an alphanumeric peer id. You can share it with others to start a call. Enjoy!</p>'+
-        '<b><p>The transcript will be most accurate if you use headphones. Try it out!</p></b>';
-    }
+function setModalHTML() {
+    return '<center><h1>Welcome to Quill!</h1></center>'+
+    '<p>Please enter a name. This will be used to identify you in the transcript.\n'+
+    'To start a call, share your Peer ID with a friend or get theirs. \n</p>'+
+    '<p><b>To achieve an accurate transcript, it is important that you use headphones '+
+    'and are in a realtively quiet place.</b>\n'+
+    'You\'re ready to start a call! Enjoy!</p>';
 }
 
-var showModal = function(error, emitter) {
+var showModal = function(emitter) {
 
     if (!emitter) {
         emitter = new EventEmitter();
     }
 
-    var bodyHTML = setModalHTML(error);
+    var bodyHTML = setModalHTML();
 
     basicModal.show({
         // String containing HTML (required)
         body: bodyHTML+
-        '<input id="modal_text" class="basicModal__text" type="text" placeholder="peer id" name="peer_id">',
+        '<input id="modal_text" class="basicModal__text" type="text" placeholder="peer name" name="peer_name">',
 
         // String - List of custom classes added to the modal (optional)
         //class: 'customClass01 customClass02',
@@ -76,29 +63,30 @@ var showModal = function(error, emitter) {
 
                 // Function - Will fire when user clicks the button (required)
                 fn: function() {
-                    var myPeerID = basicModal.getValues().peer_id;
-                    if (myPeerID === '') {
+                    var peerName = basicModal.getValues().peer_name;
+                    if (peerName === '') {
                         document.getElementById('modal_text').placeholder =
-                        'please enter an alphanumeric id';
-                        basicModal.error('peer_id');
+                        'your name should be alphanumeric and not blank';
+                        basicModal.error('peer_name');
                     }
-                    else if (!myPeerID.match(/^[a-z0-9]+$/i)) {
+                    else if (!peerName.match(/^[a-z0-9]+$/i)) {
                         document.getElementById('modal_text').value = '';
                         document.getElementById('modal_text').placeholder =
-                        'peer id must contain letters and numbers only';
-                        basicModal.error('peer_id');
+                        'name must contain letters and numbers only';
+                        basicModal.error('peer_name');
                     }
                     else {
                         //valid peerid ready to be sent to signaling server
-                        emitter.emit('peerid', myPeerID);
+                        emitter.emit('peerName', peerName);
+                        document.querySelector('#myID').setAttribute('placeholder', 'fetching id...');
                         basicModal.close();
-                        console.log('peerid event emitted ',myPeerID);
+                        console.log('peerName event emitted ',peerName);
                     }
                 }
             }
         }
     });
-    
+
     return emitter;
 
 };

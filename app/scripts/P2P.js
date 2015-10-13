@@ -86,10 +86,10 @@ function handleNewPeers(data, peer, stream) {
 }
 
 // DATA CONNECTION
-function dataConnectPeer(peer, otherPeer, stream) {
+function dataConnectPeer(peer, otherPeer, stream, peerName) {
   var dataCon = peer.connect(otherPeer);
   dataCon.on('open', function() {
-    speechToText.transcribe(peer.id, dataCon);
+    speechToText.transcribe(peerName, dataCon);
     //send peers I'm connected to; same as yours?
     dataCon.send({peers: peers});
     dataCon.on('data', function(data) {
@@ -108,9 +108,9 @@ function dataConnectPeer(peer, otherPeer, stream) {
   });
 }
 
- function handleIncomingData(peer, stream) {
+ function handleIncomingData(peer, stream, peerName) {
   peer.on('connection', function(dataCon) {
-    speechToText.transcribe(peer.id, dataCon);
+    speechToText.transcribe(peerName, dataCon);
     dataCon.on('open', function () {
       dataCon.send({peers: peers});
       dataCon.on('data', function(data) {
@@ -151,31 +151,38 @@ function makePeerHeartbeater(peer) {
   };
 }
 
-function initPeer(peerID, stream, emitter) {
+function initPeer(peerName, stream) {
     //var peer = new Peer({key: 'xwx3jbch3vo8yqfr'});  //for testing
-    var peer = new Peer(peerID, {host:'arcane-island-4855.herokuapp.com', secure:true, port:443, key: 'peerjs'});
+    var peer = new Peer({host:'arcane-island-4855.herokuapp.com', secure:true, port:443, key: 'peerjs'});
     makePeerHeartbeater(peer);
 
     peer.on('open', function(id) {
-        peers.push(id);
-        document.querySelector('#myID').value = id;
+        if (typeof(id) === 'undefined') {
+            console.log('id was undefined on open!');
+            alterDOM.makeAlert('there was a problem contacting the server. Please reload the app');
+        }
+        else {
+            peers.push(id);
+            document.querySelector('#myID').value = id;
+        }
+
     });
 
     peer.on('error', function (error) {
         console.log('ERROR '+ error);
         if (error.type === 'peer-unavailable') {
-            alterDOM.makeAlert('peer unavailable. Do you have the correct ID?');
+            alterDOM.makeAlert('that person is unavailable. Do you have the correct ID?');
         }
 
         if (error.type === 'unavailable-id' || error.type === 'invalid-id') {
             peer.destroy();
-            modal.showModal(error, emitter);
+            alterDOM.makeAlert('there was a problem with the server. Please reload the app');
         }
     });
 
-    alterDOM.bindCallClick(peer, stream);
+    alterDOM.bindCallClick(peer, stream, peerName);
     handleIncomingCall(peer, stream);
-    handleIncomingData(peer, stream);
+    handleIncomingData(peer, stream, peerName);
 }
 
 exports.initPeer = initPeer;

@@ -14,7 +14,7 @@ var emitter = modal.showModal();
 //On ready, get mic and video data to ready P2P connectivity and init peer object
 document.addEventListener('DOMContentLoaded', function() {
 
-    speechToText.bindDownloadClick();
+    speechToText.init();
 
     navigator.webkitGetUserMedia({ video: {
         mandatory: { maxWidth: 1280, maxHeight: 720, minWidth: 1280, minHeight: 720, }},
@@ -23,9 +23,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             alterDOM.showMyMedia(stream);
 
-            emitter.on('peerid', function (myPeerId) {
-                console.log('peerID event recieved ',myPeerId);
-                P2P.initPeer(myPeerId, stream, emitter);
+            emitter.on('peerName', function (peerName) {
+                console.log('peerName event recieved ',peerName);
+                P2P.initPeer(peerName, stream);
             });
 
         }, function (err) {console.error(err);});
@@ -33,5 +33,5 @@ document.addEventListener('DOMContentLoaded', function() {
         $(window).resize(function () {
             alterDOM.resizeVids();
         });
-
+        
     }, false);

@@ -87,10 +87,10 @@ function handleNewPeers(data, peer, stream) {
 }
 
 // DATA CONNECTION
-function dataConnectPeer(peer, otherPeer, stream) {
+function dataConnectPeer(peer, otherPeer, stream, peerName) {
   var dataCon = peer.connect(otherPeer);
   dataCon.on('open', function() {
-    speechToText.transcribe(peer.id, dataCon);
+    speechToText.transcribe(peerName, dataCon);
     //send peers I'm connected to; same as yours?
     dataCon.send({peers: peers});
     dataCon.on('data', function(data) {
@@ -109,9 +109,9 @@ function dataConnectPeer(peer, otherPeer, stream) {
   });
 }
 
- function handleIncomingData(peer, stream) {
+ function handleIncomingData(peer, stream, peerName) {
   peer.on('connection', function(dataCon) {
-    speechToText.transcribe(peer.id, dataCon);
+    speechToText.transcribe(peerName, dataCon);
     dataCon.on('open', function () {
       dataCon.send({peers: peers});
       dataCon.on('data', function(data) {
@@ -152,31 +152,38 @@ function makePeerHeartbeater(peer) {
   };
 }
 
-function initPeer(peerID, stream, emitter) {
+function initPeer(peerName, stream) {
     //var peer = new Peer({key: 'xwx3jbch3vo8yqfr'});  //for testing
-    var peer = new Peer(peerID, {host:'arcane-island-4855.herokuapp.com', secure:true, port:443, key: 'peerjs'});
+    var peer = new Peer({host:'arcane-island-4855.herokuapp.com', secure:true, port:443, key: 'peerjs'});
     makePeerHeartbeater(peer);
 
     peer.on('open', function(id) {
-        peers.push(id);
-        document.querySelector('#myID').value = id;
+        if (typeof(id) === 'undefined') {
+            console.log('id was undefined on open!');
+            alterDOM.makeAlert('there was a problem contacting the server. Please reload the app');
+        }
+        else {
+            peers.push(id);
+            document.querySelector('#myID').value = id;
+        }
+
     });
 
     peer.on('error', function (error) {
         console.log('ERROR '+ error);
         if (error.type === 'peer-unavailable') {
-            alterDOM.makeAlert('peer unavailable. Do you have the correct ID?');
+            alterDOM.makeAlert('that person is unavailable. Do you have the correct ID?');
         }
 
         if (error.type === 'unavailable-id' || error.type === 'invalid-id') {
             peer.destroy();
-            modal.showModal(error, emitter);
+            alterDOM.makeAlert('there was a problem with the server. Please reload the app');
         }
     });
 
-    alterDOM.bindCallClick(peer, stream);
+    alterDOM.bindCallClick(peer, stream, peerName);
     handleIncomingCall(peer, stream);
-    handleIncomingData(peer, stream);
+    handleIncomingData(peer, stream, peerName);
 }
 
 exports.initPeer = initPeer;
@@ -200,7 +207,7 @@ var $ = require('jquery');
 var alterDOM = require('./alterDOM');
 
 
-function bindCallClick(peer, stream) {
+function bindCallClick(peer, stream, peerName) {
     var button = document.querySelector('#connect');
 
     button.addEventListener('click', function () {
@@ -214,7 +221,7 @@ function bindCallClick(peer, stream) {
         else {
             document.querySelector('#peerID').value = '';
             P2P.callPeer(peer, otherPeer, stream);
-            P2P.dataConnectPeer(peer, otherPeer, stream);
+            P2P.dataConnectPeer(peer, otherPeer, stream, peerName);
         }
     });
 }
@@ -232,7 +239,7 @@ function resizePeerVids() {
 }
 
 function resizeLocalMedia() {
-    $('localMedia').width($('#localMediaContainer').width());
+    $('#localMedia').width($('#localMediaContainer').width());
 }
 
 function resizeVids() {
@@ -367,7 +374,7 @@ var emitter = modal.showModal();
 //On ready, get mic and video data to ready P2P connectivity and init peer object
 document.addEventListener('DOMContentLoaded', function() {
 
-    speechToText.bindDownloadClick();
+    speechToText.init();
 
     navigator.webkitGetUserMedia({ video: {
         mandatory: { maxWidth: 1280, maxHeight: 720, minWidth: 1280, minHeight: 720, }},
@@ -376,9 +383,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             alterDOM.showMyMedia(stream);
 
-            emitter.on('peerid', function (myPeerId) {
-                console.log('peerID event recieved ',myPeerId);
-                P2P.initPeer(myPeerId, stream, emitter);
+            emitter.on('peerName', function (peerName) {
+                console.log('peerName event recieved ',peerName);
+                P2P.initPeer(peerName, stream);
             });
 
         }, function (err) {console.error(err);});
@@ -386,7 +393,7 @@ document.addEventListener('DOMContentLoaded', function() {
         $(window).resize(function () {
             alterDOM.resizeVids();
         });
-
+        
     }, false);
 
 },{"./P2P":1,"./alterDOM":2,"./modal":4,"./speechToText":5,"jquery":8}],4:[function(require,module,exports){
@@ -394,42 +401,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
 var EventEmitter = require('events').EventEmitter;
 var basicModal = require('basicModal');
+var $ = require('jquery');
 
-
-function setModalHTML(error) {
-
-    if (error) {
-
-        if (error.type === 'unavailable-id') {
-            return'<center><h3>the ID you\'ve chosen is in use!</h3></center>'+
-            '<p>Try another alphanumeric ID.</p>';
-        }
-
-        if (error.type === 'invalid-id') {
-            return '<center><h3>You\'ve chosen an invalid ID</h3></center>'+
-            '<p>You probably used a character other than a letter or number. Try another alphanumeric ID!</p>';
-        }
-    }
-
-    else {
-        return '<center><h1>Welcome to Quill!</h1></center>'+
-        '<p>Please enter an alphanumeric peer id. You can share it with others to start a call. Enjoy!</p>'+
-        '<b><p>The transcript will be most accurate if you use headphones. Try it out!</p></b>';
-    }
+function setModalHTML() {
+    return '<center><h1>Welcome to Quill!</h1></center>'+
+    '<p>Please enter a name. This will be used to identify you in the transcript.\n'+
+    'To start a call, share your Peer ID with a friend or get theirs. \n</p>'+
+    '<p><b>To achieve an accurate transcript, it is important that you use headphones '+
+    'and are in a realtively quiet place.</b>\n'+
+    'You\'re ready to start a call! Enjoy!</p>';
 }
 
-var showModal = function(error, emitter) {
+var showModal = function(emitter) {
 
     if (!emitter) {
         emitter = new EventEmitter();
     }
 
-    var bodyHTML = setModalHTML(error);
+    var bodyHTML = setModalHTML();
 
     basicModal.show({
         // String containing HTML (required)
         body: bodyHTML+
-        '<input id="modal_text" class="basicModal__text" type="text" placeholder="peer id" name="peer_id">',
+        '<input id="modal_text" class="basicModal__text" type="text" placeholder="peer name" name="peer_name">',
 
         // String - List of custom classes added to the modal (optional)
         //class: 'customClass01 customClass02',
@@ -468,36 +462,37 @@ var showModal = function(error, emitter) {
 
                 // Function - Will fire when user clicks the button (required)
                 fn: function() {
-                    var myPeerID = basicModal.getValues().peer_id;
-                    if (myPeerID === '') {
+                    var peerName = basicModal.getValues().peer_name;
+                    if (peerName === '') {
                         document.getElementById('modal_text').placeholder =
-                        'please enter an alphanumeric id';
-                        basicModal.error('peer_id');
+                        'your name should be alphanumeric and not blank';
+                        basicModal.error('peer_name');
                     }
-                    else if (!myPeerID.match(/^[a-z0-9]+$/i)) {
+                    else if (!peerName.match(/^[a-z0-9]+$/i)) {
                         document.getElementById('modal_text').value = '';
                         document.getElementById('modal_text').placeholder =
-                        'peer id must contain letters and numbers only';
-                        basicModal.error('peer_id');
+                        'name must contain letters and numbers only';
+                        basicModal.error('peer_name');
                     }
                     else {
                         //valid peerid ready to be sent to signaling server
-                        emitter.emit('peerid', myPeerID);
+                        emitter.emit('peerName', peerName);
+                        document.querySelector('#myID').setAttribute('placeholder', 'fetching id...');
                         basicModal.close();
-                        console.log('peerid event emitted ',myPeerID);
+                        console.log('peerName event emitted ',peerName);
                     }
                 }
             }
         }
     });
-    
+
     return emitter;
 
 };
 
 exports.showModal = showModal;
 
-},{"basicModal":7,"events":21}],5:[function(require,module,exports){
+},{"basicModal":7,"events":21,"jquery":8}],5:[function(require,module,exports){
 'use strict';
 // Speech to text logic
 
@@ -506,83 +501,103 @@ var alterDOM = require('./alterDOM');
 
 //buffer for transcript
 var text = '';
+var speechRecog;
 
 function transcriptAppend(message) {
-  text += message + '\n';
+    text += message + '\n';
 }
 
-function transcribe(peerID, dataCon) {
-  window.SpeechRecognition =
-  window.SpeechRecognition ||
-  window.webkitSpeechRecognition ||
-  null;
+function transcribe(peerName, dataCon) {
 
-  if (window.SpeechRecognition === null) {
-    alterDOM.makeAlert('could not locate speech recognizer');
-  }
-  else {
-
-    try {
-      var speechRecog = new window.SpeechRecognition();
-
-      //keep recording if user is silent
-      //speechRecog.continuous = true;
-      //show speech before onResult event fires
-      //speechRecog.interimResults = true;
-
-      speechRecog.onresult = function(event) {
-        var transcript = '';
-        for (var i = event.resultIndex; i < event.results.length; i++) {
-          if (i === 0) {
-            transcript = peerID+': '+event.results[i][0].transcript;
-          }
-          else {
-            transcript += event.results[i][0].transcript;
-          }
-          dataCon.send({script: transcript});
-        }
-        transcriptAppend(transcript);
-        alterDOM.logTranscript(transcript);
-      };
-
-      speechRecog.onend = function() {
-        console.log('restarted speechRecog!');
-        if (dataCon.open) {
-          speechRecog.start();
-        }
-      };
-
-      speechRecog.start();
-      console.log('listening...');
-
+    if (window.SpeechRecognition === null) {
+        alterDOM.makeAlert('could not locate speech recognizer');
     }
-    catch(error) {
-      //TODO: display error to user
-      alterDOM.makeAlert('error when transcribing: '+error.message);
+    else {
+
+        try {
+            //keep recording if user is silent
+            //speechRecog.continuous = true;
+            //show speech before onResult event fires
+            //speechRecog.interimResults = true;
+
+            speechRecog.onresult = function(event) {
+                var transcript = '';
+                for (var i = event.resultIndex; i < event.results.length; i++) {
+                    if (i === 0) {
+                        transcript = peerName+': '+event.results[i][0].transcript;
+                    }
+                    else {
+                        transcript += event.results[i][0].transcript;
+                    }
+                    dataCon.send({script: transcript});
+                }
+                transcriptAppend(transcript);
+                alterDOM.logTranscript(transcript);
+            };
+
+            speechRecog.onend = function() {
+                if (dataCon.open) {
+                    speechRecog.start();
+                }
+            };
+
+            speechRecog.start();
+            console.log('listening...');
+
+        }
+        catch(error) {
+            alterDOM.makeAlert('error when transcribing: '+error.message);
+        }
     }
-  }
 }
 
 function bindDownloadClick() {
-  var a = document.getElementById('download');
+    var a = document.getElementById('download');
 
-  a.addEventListener('click', function() {
-    if (text === '') {
-      alterDOM.makeAlert('transcript is empty!');
-    }
-    else {
-      console.log('from bindDownloadClick');
-      var file = new Blob([text]);
-      var url = window.URL.createObjectURL(file);
-      var date = new Date();
-      a.setAttribute('download', date.getTime().toString());
-      a.setAttribute('href', url);
-    }
-  });
+    a.addEventListener('click', function() {
+        if (text === '') {
+            alterDOM.makeAlert('transcript is empty!');
+        }
+        else {
+            console.log('from bindDownloadClick');
+            var file = new Blob([text]);
+            var url = window.URL.createObjectURL(file);
+            var date = new Date();
+            a.setAttribute('download', date.getTime().toString());
+            a.setAttribute('href', url);
+        }
+    });
 }
 
+function initRecognizer() {
+    window.SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition ||
+    null;
+
+    if (window.SpeechRecognition === null) {
+        alterDOM.makeAlert('could not locate speech recognizer');
+    }
+    else {
+
+        try {
+            speechRecog = new window.SpeechRecognition();
+        }
+
+        catch(e) {
+            console.log('error initializing speech recognizer');
+            alterDOM.makeAlert('there was a problem, try restarting the app');
+        }
+    }
+}
+
+function init() {
+    bindDownloadClick();
+    initRecognizer();
+}
+
+exports.init = init;
 exports.transcriptAppend = transcriptAppend;
-exports.bindDownloadClick = bindDownloadClick;
 exports.transcribe = transcribe;
 
 },{"./alterDOM":2}],6:[function(require,module,exports){

@@ -8,7 +8,7 @@ var $ = require('jquery');
 var alterDOM = require('./alterDOM');
 
 
-function bindCallClick(peer, stream) {
+function bindCallClick(peer, stream, peerName) {
     var button = document.querySelector('#connect');
 
     button.addEventListener('click', function () {
@@ -22,7 +22,7 @@ function bindCallClick(peer, stream) {
         else {
             document.querySelector('#peerID').value = '';
             P2P.callPeer(peer, otherPeer, stream);
-            P2P.dataConnectPeer(peer, otherPeer, stream);
+            P2P.dataConnectPeer(peer, otherPeer, stream, peerName);
         }
     });
 }
@@ -40,7 +40,7 @@ function resizePeerVids() {
 }
 
 function resizeLocalMedia() {
-    $('localMedia').width($('#localMediaContainer').width());
+    $('#localMedia').width($('#localMediaContainer').width());
 }
 
 function resizeVids() {
