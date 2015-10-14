@@ -81,51 +81,56 @@ function bindHangUp(call, otherPeer) {
     button.appendChild(document.createTextNode('hang up'));
 
     button.addEventListener('click', function() {
-        call.close();
-
         var newPeers = P2P.getPeers().filter(function (p) {
             return p!==otherPeer;
         });
-
         P2P.setPeers(newPeers);
+
+        call.close();
     });
 
     return button;
 }
 
 function showPeerMedia(stream, call, otherPeer) {
-    try {
 
-        //container for video and hangup button
-        var div = document.createElement('div');
-        div.setAttribute('class', 'peerVideoCont');
-        div.setAttribute('id', 'cont'+otherPeer);
+    if (!document.getElementById(otherPeer)) {
 
-        var video = document.createElement('video');
-        video.src = window.URL.createObjectURL(stream);
-        video.setAttribute('class', 'peerVideo');
-        video.setAttribute('id', otherPeer);
+        try {
 
-        var videoContainer = document.querySelector('#videoContainer');
-        div.appendChild(video);
-        videoContainer.appendChild(div);
+            //container for video and hangup button
+            var div = document.createElement('div');
+            div.setAttribute('class', 'peerVideoCont');
+            div.setAttribute('id', 'cont'+otherPeer);
 
-        resizeVids();
-        video.play();
+            var video = document.createElement('video');
+            video.src = window.URL.createObjectURL(stream);
+            video.setAttribute('class', 'peerVideo');
+            video.setAttribute('id', otherPeer);
 
-        //need position of video, so append after resizeVids
-        var button = bindHangUp(call, otherPeer);
-        div.appendChild(button);
-    }
-    catch(error) {
-        alterDOM.makeAlert('there was a problem displaying ',otherPeer,'\'s video.');
-        console.log('there was a problem displaying ',otherPeer,'\'s video. ',error);
+            var videoContainer = document.querySelector('#videoContainer');
+            div.appendChild(video);
+            videoContainer.appendChild(div);
+
+            resizeVids();
+            video.play();
+
+            //need position of video, so append after resizeVids
+            var button = bindHangUp(call, otherPeer);
+            div.appendChild(button);
+        }
+        catch(error) {
+            alterDOM.makeAlert('there was a problem displaying ',otherPeer,'\'s video.');
+            console.log('there was a problem displaying ',otherPeer,'\'s video. ',error);
+        }
     }
 }
 
 function removePeerVideo(otherPeer) {
     var videoContainer = document.querySelector('#videoContainer');
-    videoContainer.removeChild(document.getElementById('cont'+otherPeer));
+    if (document.getElementById('cont'+otherPeer)) {
+        videoContainer.removeChild(document.getElementById('cont'+otherPeer));
+    }
     resizeVids();
 }
 

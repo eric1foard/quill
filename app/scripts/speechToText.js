@@ -4,9 +4,32 @@
 //REQUIRED MODULES
 var alterDOM = require('./alterDOM');
 
-//buffer for transcript
+// buffer for transcript
 var text = '';
+// window.SpeechRecognition object
 var speechRecog;
+
+function initRecognizer() {
+    window.SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition ||
+    null;
+
+    if (window.SpeechRecognition === null) {
+        alterDOM.makeAlert('could not locate speech recognizer');
+    }
+    else {
+
+        try {
+            speechRecog = new window.SpeechRecognition();
+        }
+
+        catch(e) {
+            console.log('error initializing speech recognizer');
+            alterDOM.makeAlert('there was a problem, try restarting the app');
+        }
+    }
+}
 
 function transcriptAppend(message) {
     text += message + '\n';
@@ -20,6 +43,9 @@ function transcribe(peerName, dataCon) {
     else {
 
         try {
+            if (typeof(speechRecog) === 'undefined') {
+                initRecognizer();
+            }
             //keep recording if user is silent
             //speechRecog.continuous = true;
             //show speech before onResult event fires
@@ -51,7 +77,7 @@ function transcribe(peerName, dataCon) {
 
         }
         catch(error) {
-            alterDOM.makeAlert('error when transcribing: '+error.message);
+            console.log('error when transcribing: '+error.message);
         }
     }
 }
@@ -74,25 +100,10 @@ function bindDownloadClick() {
     });
 }
 
-function initRecognizer() {
-    window.SpeechRecognition =
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition ||
-    null;
-
-    if (window.SpeechRecognition === null) {
-        alterDOM.makeAlert('could not locate speech recognizer');
-    }
-    else {
-
-        try {
-            speechRecog = new window.SpeechRecognition();
-        }
-
-        catch(e) {
-            console.log('error initializing speech recognizer');
-            alterDOM.makeAlert('there was a problem, try restarting the app');
-        }
+function stopRecog() {
+    if (typeof(speechRecog) !== 'undefined') {
+        console.log('stopped recognition');
+        speechRecog.stop();
     }
 }
 
@@ -101,6 +112,7 @@ function init() {
     initRecognizer();
 }
 
+exports.stopRecog = stopRecog;
 exports.init = init;
 exports.transcriptAppend = transcriptAppend;
 exports.transcribe = transcribe;

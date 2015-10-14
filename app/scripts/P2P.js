@@ -16,10 +16,13 @@ function getPeers() {
 
 function setPeers(newPeers) {
     peers = newPeers;
+    if (peers.length <= 1) {
+        speechToText.stopRecog();
+    }
 }
 
 function callPeer(peer, otherPeer, stream) {
-  if (peers.indexOf(otherPeer)>=0) {
+  if (peers.indexOf(otherPeer) >= 0) {
     alterDOM.makeAlert('you are already connected with this peer!');
   }
 
@@ -42,7 +45,7 @@ function callPeer(peer, otherPeer, stream) {
     });
 
     call.on('error', function(error) {
-      alterDOM.makeAlert('there was a problem completing the call: '+error.type+ '. Try again!');
+      alterDOM.makeAlert('there was a problem completing the call: ' + error.type + '. Try again!');
     });
   }
 }
@@ -73,11 +76,11 @@ function handleIncomingCall(peer, stream) {
 function handleNewPeers(data, peer, stream) {
   console.log('from handleNewPeers, ', data.peers);
   var newPeers = data.peers.filter(function(p) {
-    return peers.indexOf(p)<0;
+    return (peers.indexOf(p) < 0);
   });
   console.log('new peers: ',newPeers);
 
-  if (newPeers.length>0) {
+  if (newPeers.length > 0) {
     //peers = peers.concat(newPeers);
     newPeers.map(function(p) {
       callPeer(peer, p, stream);

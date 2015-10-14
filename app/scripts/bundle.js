@@ -17,10 +17,13 @@ function getPeers() {
 
 function setPeers(newPeers) {
     peers = newPeers;
+    if (peers.length <= 1) {
+        speechToText.stopRecog();
+    }
 }
 
 function callPeer(peer, otherPeer, stream) {
-  if (peers.indexOf(otherPeer)>=0) {
+  if (peers.indexOf(otherPeer) >= 0) {
     alterDOM.makeAlert('you are already connected with this peer!');
   }
 
@@ -43,7 +46,7 @@ function callPeer(peer, otherPeer, stream) {
     });
 
     call.on('error', function(error) {
-      alterDOM.makeAlert('there was a problem completing the call: '+error.type+ '. Try again!');
+      alterDOM.makeAlert('there was a problem completing the call: ' + error.type + '. Try again!');
     });
   }
 }
@@ -74,11 +77,11 @@ function handleIncomingCall(peer, stream) {
 function handleNewPeers(data, peer, stream) {
   console.log('from handleNewPeers, ', data.peers);
   var newPeers = data.peers.filter(function(p) {
-    return peers.indexOf(p)<0;
+    return (peers.indexOf(p) < 0);
   });
   console.log('new peers: ',newPeers);
 
-  if (newPeers.length>0) {
+  if (newPeers.length > 0) {
     //peers = peers.concat(newPeers);
     newPeers.map(function(p) {
       callPeer(peer, p, stream);
@@ -280,51 +283,56 @@ function bindHangUp(call, otherPeer) {
     button.appendChild(document.createTextNode('hang up'));
 
     button.addEventListener('click', function() {
-        call.close();
-
         var newPeers = P2P.getPeers().filter(function (p) {
             return p!==otherPeer;
         });
-
         P2P.setPeers(newPeers);
+
+        call.close();
     });
 
     return button;
 }
 
 function showPeerMedia(stream, call, otherPeer) {
-    try {
 
-        //container for video and hangup button
-        var div = document.createElement('div');
-        div.setAttribute('class', 'peerVideoCont');
-        div.setAttribute('id', 'cont'+otherPeer);
+    if (!document.getElementById(otherPeer)) {
 
-        var video = document.createElement('video');
-        video.src = window.URL.createObjectURL(stream);
-        video.setAttribute('class', 'peerVideo');
-        video.setAttribute('id', otherPeer);
+        try {
 
-        var videoContainer = document.querySelector('#videoContainer');
-        div.appendChild(video);
-        videoContainer.appendChild(div);
+            //container for video and hangup button
+            var div = document.createElement('div');
+            div.setAttribute('class', 'peerVideoCont');
+            div.setAttribute('id', 'cont'+otherPeer);
 
-        resizeVids();
-        video.play();
+            var video = document.createElement('video');
+            video.src = window.URL.createObjectURL(stream);
+            video.setAttribute('class', 'peerVideo');
+            video.setAttribute('id', otherPeer);
 
-        //need position of video, so append after resizeVids
-        var button = bindHangUp(call, otherPeer);
-        div.appendChild(button);
-    }
-    catch(error) {
-        alterDOM.makeAlert('there was a problem displaying ',otherPeer,'\'s video.');
-        console.log('there was a problem displaying ',otherPeer,'\'s video. ',error);
+            var videoContainer = document.querySelector('#videoContainer');
+            div.appendChild(video);
+            videoContainer.appendChild(div);
+
+            resizeVids();
+            video.play();
+
+            //need position of video, so append after resizeVids
+            var button = bindHangUp(call, otherPeer);
+            div.appendChild(button);
+        }
+        catch(error) {
+            alterDOM.makeAlert('there was a problem displaying ',otherPeer,'\'s video.');
+            console.log('there was a problem displaying ',otherPeer,'\'s video. ',error);
+        }
     }
 }
 
 function removePeerVideo(otherPeer) {
     var videoContainer = document.querySelector('#videoContainer');
-    videoContainer.removeChild(document.getElementById('cont'+otherPeer));
+    if (document.getElementById('cont'+otherPeer)) {
+        videoContainer.removeChild(document.getElementById('cont'+otherPeer));
+    }
     resizeVids();
 }
 
@@ -499,9 +507,32 @@ exports.showModal = showModal;
 //REQUIRED MODULES
 var alterDOM = require('./alterDOM');
 
-//buffer for transcript
+// buffer for transcript
 var text = '';
+// window.SpeechRecognition object
 var speechRecog;
+
+function initRecognizer() {
+    window.SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition ||
+    null;
+
+    if (window.SpeechRecognition === null) {
+        alterDOM.makeAlert('could not locate speech recognizer');
+    }
+    else {
+
+        try {
+            speechRecog = new window.SpeechRecognition();
+        }
+
+        catch(e) {
+            console.log('error initializing speech recognizer');
+            alterDOM.makeAlert('there was a problem, try restarting the app');
+        }
+    }
+}
 
 function transcriptAppend(message) {
     text += message + '\n';
@@ -515,6 +546,9 @@ function transcribe(peerName, dataCon) {
     else {
 
         try {
+            if (typeof(speechRecog) === 'undefined') {
+                initRecognizer();
+            }
             //keep recording if user is silent
             //speechRecog.continuous = true;
             //show speech before onResult event fires
@@ -546,7 +580,7 @@ function transcribe(peerName, dataCon) {
 
         }
         catch(error) {
-            alterDOM.makeAlert('error when transcribing: '+error.message);
+            console.log('error when transcribing: '+error.message);
         }
     }
 }
@@ -569,25 +603,10 @@ function bindDownloadClick() {
     });
 }
 
-function initRecognizer() {
-    window.SpeechRecognition =
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition ||
-    null;
-
-    if (window.SpeechRecognition === null) {
-        alterDOM.makeAlert('could not locate speech recognizer');
-    }
-    else {
-
-        try {
-            speechRecog = new window.SpeechRecognition();
-        }
-
-        catch(e) {
-            console.log('error initializing speech recognizer');
-            alterDOM.makeAlert('there was a problem, try restarting the app');
-        }
+function stopRecog() {
+    if (typeof(speechRecog) !== 'undefined') {
+        console.log('stopped recognition');
+        speechRecog.stop();
     }
 }
 
@@ -596,6 +615,7 @@ function init() {
     initRecognizer();
 }
 
+exports.stopRecog = stopRecog;
 exports.init = init;
 exports.transcriptAppend = transcriptAppend;
 exports.transcribe = transcribe;
