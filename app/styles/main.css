@@ -15,6 +15,10 @@ video {
     background-color: #21252B;
 }
 
+.logo {
+    width: 50px;
+}
+
 .alert {
   display:inline-block;
 }
@@ -47,6 +51,7 @@ input {
 }
 
 #download {
+  margin-top: 8px;
   margin-left: 4px;
 }
 

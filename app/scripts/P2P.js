@@ -81,7 +81,6 @@ function handleNewPeers(data, peer, stream) {
   console.log('new peers: ',newPeers);
 
   if (newPeers.length > 0) {
-    //peers = peers.concat(newPeers);
     newPeers.map(function(p) {
       callPeer(peer, p, stream);
     });
@@ -191,9 +190,7 @@ function initPeer(peerName, stream) {
 exports.initPeer = initPeer;
 exports.getPeers = getPeers;
 exports.setPeers = setPeers;
-exports.peers = peers;
 exports.callPeer = callPeer;
 exports.handleIncomingCall = handleIncomingCall;
 exports.dataConnectPeer = dataConnectPeer;
 exports.handleIncomingData = handleIncomingData;
-exports.makePeerHeartbeater = makePeerHeartbeater;
