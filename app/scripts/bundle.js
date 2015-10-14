@@ -82,7 +82,6 @@ function handleNewPeers(data, peer, stream) {
   console.log('new peers: ',newPeers);
 
   if (newPeers.length > 0) {
-    //peers = peers.concat(newPeers);
     newPeers.map(function(p) {
       callPeer(peer, p, stream);
     });
@@ -116,6 +115,7 @@ function dataConnectPeer(peer, otherPeer, stream, peerName) {
   peer.on('connection', function(dataCon) {
     speechToText.transcribe(peerName, dataCon);
     dataCon.on('open', function () {
+        //exchange peers with new connection
       dataCon.send({peers: peers});
       dataCon.on('data', function(data) {
         if (data.script) {
@@ -192,12 +192,10 @@ function initPeer(peerName, stream) {
 exports.initPeer = initPeer;
 exports.getPeers = getPeers;
 exports.setPeers = setPeers;
-exports.peers = peers;
 exports.callPeer = callPeer;
 exports.handleIncomingCall = handleIncomingCall;
 exports.dataConnectPeer = dataConnectPeer;
 exports.handleIncomingData = handleIncomingData;
-exports.makePeerHeartbeater = makePeerHeartbeater;
 
 },{"./alterDOM":2,"./modal":4,"./speechToText":5,"peerjs":13}],2:[function(require,module,exports){
 'use strict';
@@ -409,24 +407,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
 var EventEmitter = require('events').EventEmitter;
 var basicModal = require('basicModal');
-var $ = require('jquery');
 
 function setModalHTML() {
     return '<center><h1>Welcome to Quill!</h1></center>'+
-    '<p>Please enter a name. This will be used to identify you in the transcript.\n'+
+    '<p>Please enter a name we can use to identify you in the transcript.\n'+
     'To start a call, share your Peer ID with a friend or get theirs. \n</p>'+
     '<p><b>To achieve an accurate transcript, it is important that you use headphones '+
     'and are in a realtively quiet place.</b>\n'+
     'You\'re ready to start a call! Enjoy!</p>';
 }
 
-var showModal = function(emitter) {
+function submitName(event) {
+    var input = document.querySelector('#modal_text');
+    if (typeof(input !== 'undefined') &&
+        (input === document.activeElement) &&
+        (event.keyCode === 13)) {
+            basicModal.action();
+    }
+}
 
+var showModal = function(emitter) {
     if (!emitter) {
         emitter = new EventEmitter();
     }
 
     var bodyHTML = setModalHTML();
+
+    document.addEventListener('keypress', submitName);
 
     basicModal.show({
         // String containing HTML (required)
@@ -455,6 +462,7 @@ var showModal = function(emitter) {
 
                 // Function - Will fire when user clicks the button (required)
                 fn: function() {
+                    document.removeEventListener('keypress', submitName);
                     window.close();
                 }
 
@@ -486,6 +494,7 @@ var showModal = function(emitter) {
                         //valid peerid ready to be sent to signaling server
                         emitter.emit('peerName', peerName);
                         document.querySelector('#myID').setAttribute('placeholder', 'fetching id...');
+                        document.removeEventListener('keypress', submitName);
                         basicModal.close();
                         console.log('peerName event emitted ',peerName);
                     }
@@ -494,13 +503,15 @@ var showModal = function(emitter) {
         }
     });
 
+
+
     return emitter;
 
 };
 
 exports.showModal = showModal;
 
-},{"basicModal":7,"events":21,"jquery":8}],5:[function(require,module,exports){
+},{"basicModal":7,"events":21}],5:[function(require,module,exports){
 'use strict';
 // Speech to text logic
 

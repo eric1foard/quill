@@ -114,6 +114,7 @@ function dataConnectPeer(peer, otherPeer, stream, peerName) {
   peer.on('connection', function(dataCon) {
     speechToText.transcribe(peerName, dataCon);
     dataCon.on('open', function () {
+        //exchange peers with new connection
       dataCon.send({peers: peers});
       dataCon.on('data', function(data) {
         if (data.script) {
