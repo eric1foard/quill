@@ -6,7 +6,6 @@
 var Peer = require('peerjs');
 var speechToText = require('./speechToText');
 var alterDOM = require('./alterDOM');
-var modal = require('./modal');
 
 //array of peers in call
 var peers = [];
@@ -197,7 +196,7 @@ exports.handleIncomingCall = handleIncomingCall;
 exports.dataConnectPeer = dataConnectPeer;
 exports.handleIncomingData = handleIncomingData;
 
-},{"./alterDOM":2,"./modal":4,"./speechToText":5,"peerjs":13}],2:[function(require,module,exports){
+},{"./alterDOM":2,"./speechToText":5,"peerjs":13}],2:[function(require,module,exports){
 'use strict';
 //logic for  DOM manipulations
 
@@ -579,6 +578,10 @@ function transcribe(peerName, dataCon) {
                 transcriptAppend(transcript);
                 alterDOM.logTranscript(transcript);
             };
+
+            // speechRecog.onerror = function (event) {
+            //     console.log('error from speechRecog', event);
+            // };
 
             speechRecog.onend = function() {
                 if (dataCon.open) {

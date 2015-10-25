@@ -66,6 +66,10 @@ function transcribe(peerName, dataCon) {
                 alterDOM.logTranscript(transcript);
             };
 
+            // speechRecog.onerror = function (event) {
+            //     console.log('error from speechRecog', event);
+            // };
+
             speechRecog.onend = function() {
                 if (dataCon.open) {
                     speechRecog.start();

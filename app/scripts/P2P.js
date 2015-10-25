@@ -5,7 +5,6 @@
 var Peer = require('peerjs');
 var speechToText = require('./speechToText');
 var alterDOM = require('./alterDOM');
-var modal = require('./modal');
 
 //array of peers in call
 var peers = [];
